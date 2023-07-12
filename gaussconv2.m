@@ -79,5 +79,5 @@ imp = (imp-contrast_p(1))./(contrast_p(2)-contrast_p(1)) ...
 if nargout==1
     varargout{1} = imp;
 else
-    figure; imshow(imp);
+    figure; imshow(imp); set(gca,'YDir','normal');
 end
