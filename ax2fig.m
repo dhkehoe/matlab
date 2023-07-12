@@ -50,10 +50,10 @@ set(han,'Units','Normalized'),
 pos = get(han,'Position');
 
 % For relevant component, adjust position/get axes limits in axes object units
-if com=='x'
+if lower(com)=='x'
     axpos = [0,pos(3)]+pos(1);
     lim = xlim;
-elseif com=='y'
+elseif lower(com)=='y'
     axpos = [0,pos(4)]+pos(2);
     lim = ylim;
 else
