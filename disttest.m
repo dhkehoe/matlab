@@ -15,18 +15,12 @@ if exist('y','var')
     y = y(:);
     y(isnan(y)) = [];
     y = y-ip.null;
-    n1 = numel(x);
-    n2 = numel(y);
-    t = 0;
-    z = nan(n1*n2,2);
-    for i = 1:n1
-        for j = 1:n2
-            t=t+1;
-            z(t,1) = x(i) > y(j);
-            z(t,2) = x(i) < y(j);
-        end
+    z = nan(numel(x),2);
+    for i = 1:numel(x)
+        z(i,1) = sum(x(i) > y);
+        z(i,2) = sum(x(i) < y);
     end
-    z = mean(z);
+    z = sum(z)/(numel(x)*numel(y));
 else
     z = mean([x>ip.null x<ip.null]);
 end
