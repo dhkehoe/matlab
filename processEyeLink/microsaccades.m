@@ -54,7 +54,7 @@ t = [nan; mod( atan2( y(2:end)-y(1:end-1) , x(2:end)-x(1:end-1) ), 2*pi)];
 % Contiguous sequences of samples that are outside of the noise ellipse,
 % are directionally consistent within the max theta tolerance 'maxTheta',
 % and are at least of length 'nSamps'.
-seqs = sequence(ind & circdist(t) <= p.maxTheta, nSamps);
+seqs = sequence(ind & circdistvector(t) <= p.maxTheta, nSamps);
 
 % Preallocate data structure
 sacs = repmat( struct('bins',[],'x',[],'y',[],'theta',[],...
@@ -80,3 +80,8 @@ for i = 1:numel(sacs)
     end
 end
 sacs(all(isnan(seqs),2)) = []; % Trim out rejected saccades before returning
+
+
+%% Wrap circdist() function for contiguous comparisons
+function d = circdistvector(t)
+d = [nan; reshape( circdist(t(2:end),t(1:end-1)), [],1)];
