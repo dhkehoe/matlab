@@ -67,7 +67,6 @@ function [yfit,xfit,efit] = kreg(x,y,varargin)
 %   DHK - Jan. 22, 2022
 
 %% Manage input
-s = size(x);
 x = x(:); y = y(:);
 if numel(x)~=numel(y), error('dimension mismatch in inputs ''x'' and ''y''');
 end
@@ -83,6 +82,7 @@ addOptional(p,'scale',[],validateArg), % Distance between points on x domain
 addOptional(p,'npoints',[],validateArg), % # of points on x domain
 addOptional(p,'xl',[min(x) max(x)],@(arg)all(isnumeric(arg))&&numel(arg)==2), % x domain boundaries [lower,upper]
 addOptional(p,'kernel','gauss',@(arg)all(ischar(arg))), % Kernel choice
+addOptional(p,'overlap',5,validateArg), % Overlapped smoothing interval in units of kernel bandwidth
 parse(p,varargin{:});
 p = p.Results;
 
@@ -123,49 +123,61 @@ end
 [yfit,efit] = kreg_(x, y, xfit, k, p);
 
 %% Reshape output
-yfit = reshape(yfit, s);
-xfit = reshape(xfit, s);
-efit = reshape(efit, s);
+if numel(x)==numel(xfit)
+    s = size(xfit);
+    yfit = reshape(yfit, s);
+    xfit = reshape(xfit, s);
+    efit = reshape(efit, s);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Recursive caller
-function [yfit,efit] = kreg_(x, y, xfit, k, p, overlap)
-if nargin < 6, overlap=5; end
+function [yfit,efit] = kreg_(x, y, xfit, k, p)
+% Recursively split the data until there is enough memory to perform the 
+% kernel regression
 
 try
     % Try fitting to the entire data set
     [yfit,efit] = kreg__(x, y, xfit, k, p);
     
 catch
+    try
     % Out of memory... split the data and recursively step back in
     n = numel(x);
-    yfit = nan(n,1);
-    efit = nan(n,1);
+    m = numel(xfit);
+
     v = floor(n/2); % Recursive pivot point
+    u = floor(m/2);
+
+    yfit = nan(m,1);
+    efit = nan(m,1);
 
     % Fit lower half of data
-    i = x<=x(v)+p.bw*overlap;
-    [fy,fe] = kreg_( x(i), y(i), xfit, k, p );
-    
+    i = x<=x(v)+p.bw*p.overlap;
+    j = 1:u;
+    [fy,fe] = kreg_( x(i), y(i), xfit(j), k, p );
+
     % Fill lower half of data
-    i = 1:v;
-    yfit(i) = fy(i);
-    efit(i) = fe(i);
+    yfit(j) = fy;
+    efit(j) = fe;
     clear fy, clear fe;
-    
+
     % Fit upper half of data
-    i = x>x(v)-p.bw*overlap;
-    [fy,fe] = kreg_( x(i), y(i), xfit, k, p);
+    i = x>x(v)-p.bw*p.overlap;
+    j = u+1:n;
+    [fy,fe] = kreg_( x(i), y(i), xfit(j), k, p);
 
     % Fill upper half of data
-    i = v+1:n;
-    yfit(i) = fy(end-v+1:end);
-    efit(i) = fe(end-v+1:end);
-
+    yfit(j) = fy;
+    efit(j) = fe;
+    catch err
+        keyboard; rethrow(err);
+    end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Recursive callee
+% Here is the actual kernel regression routine
 function [yfit,efit] = kreg__(x,y,xfit,k,p)
 
 % Compute kernel regression
@@ -189,9 +201,9 @@ nanIdx = isnan(x) | isinf(x) | isnan(y) | isinf(y);
 yfit(nanIdx) = nan;
 
 % Compute error
-efit = sqrt( nansum( (y-repmat(yfit,size(y,1),1)).^2 ) ) ./ f; %#ok
+% efit = nansum( (y-repmat(yfit,size(y,1),1)).^2 ); 
+efit = sqrt(nansum( (y-repmat(yfit,size(y,1),1)).^2 )) ./ f; %#ok
 efit(nanIdx) = nan;
-
 
 %% Interquartile range
 function y = iqr(x)

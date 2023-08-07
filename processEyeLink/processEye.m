@@ -40,9 +40,9 @@ function eye = processEye(file,varargin)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% OUTPUT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%   eye - 1xN array of structures containing data from N trials. The i_th 
-%         index contains data from the i_th trial. 
-% 
+%   eye - 1xN array of structures containing data from N trials. The i_th
+%         index contains data from the i_th trial.
+%
 %         Fields:
 %           .t - Vector of time flags across eye samples. Sample 1
 %                corresponds to "trialstart" and is time 0.
@@ -101,7 +101,9 @@ function eye = processEye(file,varargin)
 %                             greatly improved memory allowance
 %   (addendum) May  13, 2023: Incorporated blink detection subroutine with
 %                             greatly improved detection performance
-%
+%   (replaced) Aug.  7, 2023: Replaced 'kreg' for 'krege' .mex function,
+%                             which is much faster and requires a fraction
+%                             of the memory
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -109,7 +111,6 @@ function eye = processEye(file,varargin)
 %   devin.heinz.kehoe@umontreal.ca
 
 %% Manage inputs
-
 % Prioritize "~/processEyeLink/" folder on MATLAB path variable
 d = which('processEye.m');
 if ispc, str = '\'; else, str = '/'; end
@@ -226,7 +227,7 @@ flags = (...
 
 %% Define inline functions
 
- % Clock alignment function to retrieve time flag indices
+% Clock alignment function to retrieve time flag indices
 getTimeIndex = @(t,idx) find( min(abs(t-idx))==abs(t-idx) );
 
 %% Specify column headers for data preprocessing
@@ -251,9 +252,9 @@ h.totalFeedback = 12; % task feedback     (flags)
 
 h.blink         = -1; % Oculomotor behavior code
 h.fixation      =  0; % Oculomotor behavior code
-h.fixationDrift =  1; % Oculomotor behavior code
+h.fixationDrift =  1; % Oculomotor behavior code (NOT IMPLEMENTED)
 h.microsaccade  =  2; % Oculomotor behavior code
-h.pursuit       =  3; % Oculomotor behavior code
+h.pursuit       =  3; % Oculomotor behavior code (NOT IMPLEMENTED)
 h.saccade       =  4; % Oculomotor behavior code
 
 %% Process each trial
@@ -301,7 +302,7 @@ for i = 1:numel(trials)
         [eye(i).x, eye(i).y] = smooth( eye(i).x, eye(i).y, p.temporalBW/p.sampRate, p.spatialBW );
 
         % Smooth pupil size
-        eye(i).p = kreg( eye(i).t, eye(i).p, 'domain',eye(i).t, 'bw',p.temporalBW );
+        eye(i).p = krege( eye(i).t, eye(i).p, eye(i).t, p.temporalBW );
     end
 
     % Find true start/end of blinks
@@ -313,7 +314,7 @@ for i = 1:numel(trials)
     eye(i).x(b) = nan;
     eye(i).y(b) = nan;
     clear b;
-    
+
     % Get saccade info
     eye(i).s = saccades( eye(i).x, eye(i).y,...
         'sampRate',p.sampRate,...
@@ -330,7 +331,7 @@ for i = 1:numel(trials)
     for j = 1:numel(eye(i).s)
         eye(i).e( eye(i).s(j).bins ) = h.saccade;
     end
-    
+
     % Get microsaccades from 'fixation' activity
     mx = eye(i).x; % Make a copy of 'x'
     my = eye(i).y; % Make a copy of 'y'
@@ -343,5 +344,5 @@ for i = 1:numel(trials)
     for j = 1:numel(eye(i).m)
         eye(i).e( eye(i).m(j).bins ) = h.microsaccade;
     end
- 
+
 end
