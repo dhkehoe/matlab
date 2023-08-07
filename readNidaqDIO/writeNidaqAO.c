@@ -78,7 +78,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	DAQmxErrChk(DAQmxCreateTask("",&taskHandle));
 
     // int32 __CFUNC DAQmxCreateAOVoltageChan(TaskHandle taskHandle, const char physicalChannel[], const char nameToAssignToChannel[], float64 minVal, float64 maxVal, int32 units, const char customScaleName[]);
-	DAQmxErrChk(DAQmxCreateAOVoltageChan(taskHandle,"Dev2/ao0","",-10.0,10.0,DAQmx_Val_Volts,""));
+	DAQmxErrChk(DAQmxCreateAOVoltageChan(taskHandle, lines, "", -10.0, 10.0, DAQmx_Val_Volts,""));
     // specify a list: Dev1/port0, Dev1/port1/line0:2 
 
 	// int32 __CFUNC DAQmxStartTask(TaskHandle taskHandle);
