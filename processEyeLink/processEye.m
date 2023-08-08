@@ -16,7 +16,7 @@ function eye = processEye(file,varargin)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% OPTIONAL INPUT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%       Screen parameters:
+% SCREEN PARAMETERS:
 %   screenResolution - A 1x2 vector of screen [width,height] in pixels.
 %                           default = [2560,1440]
 %         screenSize - A 1x2 vector of screen [width,height] in centimeters.
@@ -25,17 +25,22 @@ function eye = processEye(file,varargin)
 %                      the screen and observer in centimeters.
 %                           default = 74
 %
-%       Smoothing options
-%   temporalBW - A scalar indicating the smoothing bandwidth in the
-%                temporal domain for the pupil and gaze location data.
+% SMOOTHING PARAMETERS:
+%      pupilBW - A scalar indicating the smoothing bandwidth in the
+%                temporal domain for the pupil data.
 %                Units are in seconds.
 %                   default = .01 (10 milliseconds)
-%    spatialBW - A scalar indicating the smoothing bandwidth in the spatial
-%                domain for the gaze location data. Units are in degrees of
-%                visual angle.
-%                   default = .1
+%       gazeBW - A scalar indicating the smoothing bandwidth in the
+%                temporal domain for the gaze position data. Units are in 
+%                seconds.
+%                   default = .001 (1 millisecond)
 %
-%       Saccade dectection options: (see 'saccades.m')
+%
+% SACCADE DETECTION PARAMETERS: (see 'saccades.m')
+%
+% MICROSACCADE DETECTION PARAMETERS: (see 'microsaccades.m')
+%
+% BLINK DETECTION PARAMETERS: (see 'blinks.m')
 %
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% OUTPUT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -101,9 +106,8 @@ function eye = processEye(file,varargin)
 %                             greatly improved memory allowance
 %   (addendum) May  13, 2023: Incorporated blink detection subroutine with
 %                             greatly improved detection performance
-%   (replaced) Aug.  7, 2023: Replaced 'kreg' for 'krege' .mex function,
-%                             which is much faster and requires a fraction
-%                             of the memory
+%   (modified) Aug.  7, 2023: Replaced 'kreg' and 'smooth' functions with 
+%                             the 'krege' .mex function. Minor other tweaks
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -141,8 +145,8 @@ addOptional(p,'screenSize',[60.9,34.3],@(x)isnumeric(x)&&numel(x)==2); % Screen 
 addOptional(p,'screenDistance',74,@(x)isnumeric(x)&&numel(x)==1); % Viewing distance (default = 57 cm)
 
 % Smoothing options
-addOptional(p,'temporalBW',.01,@(x)isnumeric(x)&&numel(x)==1); % Smoothing bandwidth in temporal domain
-addOptional(p,'spatialBW',.1,@(x)isnumeric(x)&&numel(x)==1); % Smoothing bandwidth in spatial domain
+addOptional(p,'pupilBW',.01,@(x)isnumeric(x)&&numel(x)==1); % Smoothing bandwidth for pupil data
+addOptional(p,'gazeBW',.001,@(x)isnumeric(x)&&numel(x)==1); % Smoothing bandwidth for gaze data
 
 % Saccade detection options
 addOptional(p,'sampRate',.0005,@(x)isnumeric(x)&&numel(x)==1);
@@ -296,13 +300,13 @@ for i = 1:numel(trials)
     eye(i).e = zeros(size(eye(i).t)) + h.fixation; % Default oculomotor event code to fixation event
 
     % Smooth time series data
-    if p.temporalBW
+    if p.gazeBW % Smooth gaze position
+        eye(i).x = krege( eye(i).t, eye(i).x, eye(i).t, p.gazeBW );
+        eye(i).y = krege( eye(i).t, eye(i).y, eye(i).t, p.gazeBW );
+    end
 
-        % Smooth gaze position
-        [eye(i).x, eye(i).y] = smooth( eye(i).x, eye(i).y, p.temporalBW/p.sampRate, p.spatialBW );
-
-        % Smooth pupil size
-        eye(i).p = krege( eye(i).t, eye(i).p, eye(i).t, p.temporalBW );
+    if p.pupilBW % Smooth pupil size
+        eye(i).p = krege( eye(i).t, eye(i).p, eye(i).t, p.pupilBW );
     end
 
     % Find true start/end of blinks

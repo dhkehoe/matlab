@@ -1,5 +1,5 @@
 function sacs = microsaccades(x,y,varargin)
-% Needs documenting...
+% Needs documenting... see 'saccades.m' for starters
 
 %% Manage inputs
 p = inputParser;
@@ -38,7 +38,7 @@ elseif strcmp(p.method,'conf')
     [~,~,nu(1),nu(2),nu(3)] = confEllipse(vx,vy);
 %     nu = [width,height,rot];
 
-    % Check which points fall within ellipse
+    % Check which points fall within the ellipse
     ind = (cos(nu(3))*(vx-nanmean(vx))+sin(nu(3))*(vy-nanmean(vy))).^2 / nu(1)^2 +...
         (sin(nu(3))*(vx-nanmean(vx))-cos(nu(3))*(vy-nanmean(vy))).^2 / nu(2)^2 > 1; %#ok
 end
