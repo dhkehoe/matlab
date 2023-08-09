@@ -25,10 +25,4 @@ function x = subsets(n)
 %
 %   DHK - Dec. 11, 2021
 
-ss = 2^n; % all subsets of 'n'
-x = zeros(ss,n); % output structure
-bits = (n-1:-1:0);
-for i = 1:ss
-    x(i,:) = logical(bitand(i-1,2.^bits));
-end
-% x = logical(bitand( repmat( (0:ss-1)' ,1,n), repmat(2.^bits,ss,1) )) % not sure if this method is fast or not
+x = bitand( repmat( (0:2^n-1)',1,n), repmat(2.^(n-1:-1:0),2^n,1) )&1;
