@@ -1,4 +1,4 @@
-function [yfit,xfit,efit] = kreg(x,y,varargin)
+function [yfit,xfit,efit,f] = kreg(x,y,varargin)
 % Fit a kernel regression function of y ~ x. Can use a fixed bandwidth or
 % k-nearest neighbors. Can choose between several kernels. Can specify the
 % limits, scale, and precision of the x-domain or can simply give the exact
@@ -138,7 +138,7 @@ y = y.* f; % weight the outcome
 f = sum(f);
 yfit = sum(y)./f;
 yfit(f==0) = 0; % protect against divide by zero nans
-if nargout==3
+if nargout>2
     efit = sqrt( sum( (y-repmat(yfit,size(y,1),1)).^2 ) ) ./f;
     efit(f==0) = 0;
 end
