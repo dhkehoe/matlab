@@ -143,14 +143,17 @@ try
 catch
     try
     % Out of memory... split the data and recursively step back in
+
     n = numel(x);
     m = numel(xfit);
+    
+    yfit = nan(m,1);
+    efit = nan(m,1);
+
+    if ~n || ~m, return; end
 
     v = floor(n/2); % Recursive pivot point
     u = floor(m/2);
-
-    yfit = nan(m,1);
-    efit = nan(m,1);
 
     % Fit lower half of data
     i = x<=x(v)+p.bw*p.overlap;
