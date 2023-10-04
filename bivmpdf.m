@@ -11,8 +11,8 @@ function y = bivmpdf(X1,X2,mu,kappa,lambda)
 %           spatial dimensions.
 %  lambda - Scalar parameter of the correlation between spatial dimensions.
 
-if size(X,2)~=2 || numel(size(X))>2
-    error('incorrect dimensions for arg ''X''');
+if any(size(X1)~=size(X2))
+    error('dimension mismatch between args ''X1'' and ''X2''');
 end
 
 i = 0:88;
