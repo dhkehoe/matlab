@@ -127,7 +127,7 @@ switch p.kernel
     case 2
         k = @(x1,x2,bw) mean(-bw(1)/2 <= x1 & x1 <= bw(1)/2 & -bw(2)/2 <= x2 & x2 <= bw(2)/2,3) / prod(bw);
     case 3
-        k = @(x1,x2,bw) mean(exp( bw(1)*cos(x1)+bw(2)*cos(x2) ),3) * prod( bw./(4*pi*sinh(bw)) );
+        k = @(x1,x2,bw) mean(exp( bw(1)*cos(x1)+bw(2)*cos(x2) ),3) / ((2*pi)^2*prod(besseli(0,bw)));% prod( bw./(4*pi*sinh(bw)) );
 end
 
 %% Set default bandwidths
