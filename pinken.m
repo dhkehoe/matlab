@@ -10,7 +10,7 @@ end
 y = [linspace(1,floor(s(1)/2),floor(s(1)/2)), -linspace(ceil(s(1)/2),1,ceil(s(1)/2))]*f;
 x = [linspace(1,floor(s(2)/2),floor(s(2)/2)), -linspace(ceil(s(2)/2),1,ceil(s(2)/2))]*f;
 [x,y] = meshgrid(x,y);
-f = sqrt(x.^2+y.^2); % 2D spatial frequency domain
+f = sqrt(x.^2+y.^2).^f; % 2D spatial frequency domain
 
 pim = real(ifft2(fft2(im)./f));
 for i = 1:size(mm,1)
