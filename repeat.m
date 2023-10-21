@@ -14,9 +14,9 @@ function y = repeat(mat,varargin)
 %   y = repeat(x,[N,M,...]);
 %
 % INPUT
-%    mat - The matrix to be replicated across each lower dimension passed
+%      x - The matrix to be replicated across each lower dimension passed
 %          the size argument.
-% (size) - Size of the lower replication dimensions, passed as a separate
+% (size) - Size of the lower replication dimensions, passed as separate
 %          scalar arguments or collated into a vector.
 %
 % OUTPUT
@@ -27,25 +27,23 @@ function y = repeat(mat,varargin)
 %   DHK - Nov.7, 2022
 
 %% Check inputs
-if isempty(mat), y = []; return; end
-
-if isempty(varargin) % No size arguments provided
-    error('Not enough input arguments.');
-elseif all(cellfun(@isnumeric,varargin)) % Check size arguments
+try
+    repmat([],varargin{:}); % Exactly replicate input argument errors thrown by repmat()
     if numel(varargin)>1 % Size input as separate arguments
-        s = [varargin{:}];
+            s = [varargin{:}];
     else % Size input as a vector
         s = varargin{1};
     end
-else, error('Replication factors must be numeric.');
+catch err
+    throw(err);
 end
 
 %% Process
+if isempty(mat), y = []; return; end % Edge case
+
 m = size(mat); % Get the size of the replicated data
-if isscalar(mat) % Adjust for scalars
-    m = 1;
-elseif isvector(mat) % and for vectors
-    m = m(m>1);
+if isvector(mat) % Adjust for vectors to avoid y having shape [s,1,numel(m)]
+    m = numel(m);
 end
 
 y = nan([s,m]); % Initialize output structure
