@@ -43,7 +43,7 @@ if isempty(mat), y = []; return; end % Edge case
 
 m = size(mat); % Get the size of the replicated data
 if isvector(mat) % Adjust for vectors to avoid y having shape [s,1,numel(m)]
-    m = numel(m);
+    m = numel(mat);
 end
 
 y = nan([s,m]); % Initialize output structure
