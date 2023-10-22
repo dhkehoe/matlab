@@ -166,7 +166,7 @@ if isempty(p.domain)
     if isempty(p.xl)
         p.xl = [min(d);max(d)]' + [-1,1].*p.bw(:)*2; % Default to edge of data +/- 2 SDs
     elseif numel(p.xl)==2 % Repeat xlims across both domains
-        p.xl = [p.xl(:)',p.xl(:)']; % Repeat; ensure format
+        p.xl = [p.xl(:)';p.xl(:)']; % Repeat; ensure format
     elseif numel(size(p.xlim))>2 || numel(p.xl)>4  % Wrong number of xlims provided
         error('Optional argument ''xl'' must contain either a 1x2 vector or 2x2 matrix.');
     end
