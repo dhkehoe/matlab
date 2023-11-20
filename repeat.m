@@ -1,10 +1,23 @@
-function y = repeat(mat,varargin)
-% Repeat a matrix of any size across lower dimensions. If 'mat' is the
-% input matrix and is of size S, and the replication dimensions are (N,M),
-% then 'y' is of size [N,M,S] and 'mat' is replicated across all lower
-% dimensions such that
-%   squeeze(y(i,j,:)) == mat(:)
-% for any (i,j).
+function y = repeat(x,varargin)
+% Repeat a matrix of any size across any new or existing dimensions. This
+% extends the MATLAB function 'repmat' to lower dimensions. For example,
+% given the following usage
+%   y = repeat(x,N,M);
+% where 'x' is the input matrix of size S, and the replication dimensions
+% are [N, M], then the output matrix 'y' is of size [N,M,S] such that 'x'
+% is replicated across all lower dimensions. That is, y(i,j,:) is equal to
+% 'x' for any (i,j). More specifically:
+%   all( reshape( y(i,j,:) ,[],1) == x(:) )
+% is true for any (i,j).
+%
+% The input matrix 'x' is always repeated along the last requested
+% dimension in the replication list. As such, this function can exactly
+% replicate the functionality of 'repmat' by requesting repetition sizes of
+% 1 across all filled dimensions of input matrix 'x'. For example, assume
+% input matrix 'x' has size S = [A,B]. Then the following usage
+%   y = repeat(x,1,1,N);
+% produces output matrix 'y' with size of [A,B,N] and is equvalent to
+%   y = repmat(x,1,1,N);
 %
 % Replication dimensions can be passed individually or as a vector.
 %
@@ -20,7 +33,7 @@ function y = repeat(mat,varargin)
 %          scalar arguments or collated into a vector.
 %
 % OUTPUT
-%      y - The resultant matrix with 'mat' replicated across the first
+%      y - The resultant matrix with 'x' replicated across the first
 %          dimensions specified by (size).
 %
 %
@@ -39,16 +52,16 @@ catch err
 end
 
 %% Process
-if isempty(mat), y = []; return; end % Edge case
+if isempty(x), y = []; return; end % Edge case
 
-m = size(mat); % Get the size of the replicated data
-if isvector(mat) % Adjust for vectors to avoid y having shape [s,1,numel(m)]
-    m = numel(mat);
+m = size(x); % Get the size of the replicated data
+if isvector(x) % Adjust for vectors to avoid y having shape [s,1,numel(m)]
+    m = numel(x);
 end
 
 y = nan([s,m]); % Initialize output structure
 p = prod(s); % Compute step sizes
-for i = 1:numel(mat) % For all replicated data
+for i = 1:numel(x) % For all replicated data
     j = p*(i-1)+1 : p*i; % Compute step sizes
-    y(j) = mat(i);
+    y(j) = x(i);
 end
