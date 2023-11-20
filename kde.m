@@ -30,7 +30,7 @@ norm = find(strcmp(p.norm,norm));
 if isempty(norm), error(['normalization type ''',p.norm,''' not recognized. check documentation']), end
 
 %% Define kernel and set default bandwidths
-kernel = {'gauss','rect','exp','pgauss'}; % Accepted kernel choices
+kernel = {'gauss','rect','exp','pgauss','tri','vonmises'}; % Accepted kernel choices
 kernel = find(strcmp(p.kernel,kernel));
 if isempty(kernel), error(['kernel ''',p.kernel,''' not recognized. check documentation']), end
 if any(p.bounded)&&kernel~=1, error(['bounds are not supported for the ''',p.kernel,''' kernel. either use a Gaussian kernel or do not impose bounds']), end
@@ -60,6 +60,12 @@ switch kernel
     case 4 % (Positive) half Gaussian kernel
         if isempty(p.bw), p.bw = (.9*min([std(d) iqr(d)/1.34])*numel(d)^(-1/5))/2; end
         k = @(x,x0) normpdf(x,x0,p.bw) .* (x-x0>=0) .* 2;
+    case 5 % triangle
+        if isempty(p.bw), p.bw = std(d); end
+        k = @(x,x0) (p.bw-abs(x-x0))./p.bw.^2 .* (abs(x-x0)<=p.bw);
+    case 6 % von mises (circular Gaussian)
+        if isempty(p.bw), p.bw = .9*min([std(d) iqr(d)/1.34])*numel(d)^(-1/5); end
+        k = @(x,x0) exp( p.bw*cos(x-x0) ) ./ (2*pi*besseli(0,p.bw));
 end
 
 %% Define domain of x

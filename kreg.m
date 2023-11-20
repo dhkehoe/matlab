@@ -52,9 +52,13 @@ function [yfit,xfit,efit,f] = kreg(x,y,varargin)
 %        xl - The [min,max] values of the unspecified domain. Default value
 %             is the [min,max] of the random variable X.
 %    kernel - A string specifying the type of kernel. Valid options are
-%              STRING   |   FULL NAME  |   FORM
-%               'gauss' |  Gaussian    |    exp( -x^2 / (2*bw^2) )   default
-%               'rect'  | Rectangle    |    bw/2 <= x & x <= bw/2
+%               OPTION | STRING   |   FULL NAME  |   FORM
+%                  (1) |  'gauss' |  Gaussian    |    exp( -x^2 / (2*bw^2) )   default
+%                  (2) | 'pgauss' |  Positive    |    exp( -x^2 / (2*bw^2) )  
+%                      |          |  Gaussian    |          for x >= 0, otherwise 0
+%                  (3) | 'ngauss' |  Negative    |    exp( -x^2 / (2*bw^2) )  
+%                      |          |  Gaussian    |          for x <= 0, otherwise 0
+%                  (4) | 'rect'   | Rectangle    |    bw/2 <= x & x <= bw/2
 %
 %
 % OUTPUT
@@ -94,7 +98,7 @@ if ip.knn > n, error('''knn'' cannot exceed the number of data'); end
 if ~isempty(ip.knn) && ~isempty(ip.bw)
     warning('setting ''knn'' supercedes values set to ''bw''');
 end
-k = find(strcmp(ip.kernel,{'gauss','rect'}));
+k = find(strcmp(ip.kernel,{'gauss','pgauss','ngauss','exp','bexp','tri','rect','skew'}));
 if isempty(k), error('unsupported ''kernel'' argument. options are {''gauss'', ''rect''}'); end
 % define kernel functions
 switch k
@@ -102,8 +106,26 @@ switch k
         if isempty(ip.bw) && isempty(ip.knn), ip.bw = .9*min([std(x) iqr(x)/1.34])*n^(-1/5); end
         k = @(x,bw) exp(-x.^2./(2.*bw.^2));
     case 2
+        if isempty(ip.bw) && isempty(ip.knn), ip.bw = .9*min([std(x) iqr(x)/1.34])*n^(-1/5); end
+        k = @(x,bw) exp(-x.^2./(2.*bw.^4)) .* (0<=x);
+    case 3
+        if isempty(ip.bw) && isempty(ip.knn), ip.bw = .9*min([std(x) iqr(x)/1.34])*n^(-1/5); end
+        k = @(x,bw) exp(-x.^2./(2.*bw.^4)) .* (x<=0);
+    case 4
+        if isempty(ip.bw) && isempty(ip.knn), ip.bw = .9*min([std(x) iqr(x)/1.34])*n^(-1/5); end
+        k = @(x,bw) exp(-x/bw) .* (0<=x);
+    case 5
+        if isempty(ip.bw) && isempty(ip.knn), ip.bw = .9*min([std(x) iqr(x)/1.34])*n^(-1/5); end
+        k = @(x,bw) exp(-abs(x)/bw) .* (x<=0);
+    case 6
+        if isempty(ip.bw) && isempty(ip.knn), ip.bw = 2*iqr(x)*n^(-1/3); end
+        k = @(x,bw) (bw-abs(x))/bw .* (abs(x)<=bw);
+    case 7
         if isempty(ip.bw) && isempty(ip.knn), ip.bw = 2*iqr(x)*n^(-1/3); end
         k = @(x,bw) -bw/2 <= x & x <= bw/2;
+    case 8
+        if isempty(ip.bw) && isempty(ip.knn), ip.bw = .9*min([std(x) iqr(x)/1.34])*n^(-1/5); end
+        k = @f;
 end
 
 %% define x domain
@@ -124,9 +146,10 @@ end
 
 %% compute kernel regression
 [tm,tx] = meshgrid(xfit,x);
-f = abs(tx-tm); % generate distance of predictor from kernels
+f = tx-tm; % generate distance of predictor from kernels
 clear('tm','tx');
 if ~isempty(ip.knn)
+    f = abs(f);
     fs = sort(f);
     ip.bw = fs(ip.knn,:); % the knn_th row
     ip.bw(ip.bw==0) = min(fs(fs>0)); % if that row contains zero, the minimum non-zero distance
@@ -143,5 +166,11 @@ if nargout>2
     efit(f==0) = 0;
 end
 
+
+
 function y = iqr(x)
 y = diff(prctile(x, [25, 75]));
+
+function y = f(x,bw)
+y = sknormpdf(x,0,bw,-10);
+y = y./max(y(:));
