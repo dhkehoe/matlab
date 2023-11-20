@@ -43,7 +43,7 @@ function y = repeat(x,varargin)
 try
     repmat([],varargin{:}); % Exactly replicate input argument errors thrown by repmat()
     if numel(varargin)>1 % Size input as separate arguments
-            s = [varargin{:}];
+        s = [varargin{:}];
     else % Size input as a vector
         s = varargin{1};
     end
