@@ -37,8 +37,8 @@ if p.rect2cart
 end
 
 %% Convert pixels-to-degrees
-x = 2*atan2d(xy(:,1)*p.screenSize(1)/p.screenResolution(1)/2,p.screenDistance);
-y = 2*atan2d(xy(:,2)*p.screenSize(2)/p.screenResolution(2)/2,p.screenDistance);
+x = atan2d(xy(:,1)*p.screenSize(1)/p.screenResolution(1),p.screenDistance);
+y = atan2d(xy(:,2)*p.screenSize(2)/p.screenResolution(2),p.screenDistance);
 
 %% Return {x,y} or [x,y] ?
 switch nargout
