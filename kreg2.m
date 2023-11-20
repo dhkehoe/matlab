@@ -1,4 +1,4 @@
-function [y,x1,x2] = kreg2(d,varargin)
+function [Y,x1,x2] = kreg2(d,varargin)
 % Fit a 2-dimensional kernel regression. The kernel bandwidth and domain
 % can be flexibly and full-specified by the user using optional arguments.
 % Optional arguments are passed using the MATLAB name-pair convention.
@@ -231,16 +231,16 @@ end
 [x1,x2] = meshgrid(p.domain{1}, p.domain{2});
 
 % Compute deviations of data along both dimensions
-d1 = repmat(x1,1,1,n(1)) - shiftdim(repmat(d(:,1),1,size(x1,1),size(x1,2)),1);
-d2 = repmat(x2,1,1,n(1)) - shiftdim(repmat(d(:,2),1,size(x2,1),size(x2,2)),1);
+d1 = repmat(x1,1,1,n(1)) - repeat(d(:,1),size(x1));
+d2 = repmat(x2,1,1,n(1)) - repeat(d(:,2),size(x2));
 d3 = repeat(y,size(x1));
 
 % Compute KDE
 f = k(d1,d2,p.bw);
-y = sum( d3 .* f ,3);
+Y = sum( d3 .* f ,3);
 f = sum(f,3);
-y = y./f;
-y(f==0) = 0;
+Y = Y./f;
+Y(f==0) = 0;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% UTILITIES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function y = iqr(x)
