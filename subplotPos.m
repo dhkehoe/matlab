@@ -1,4 +1,4 @@
-function pos = subplotPos(nr,nc,lpad,rpad,dpad,upad,adj)
+function pos = subplotPos(nr,nc,lpad,rpad,dpad,upad,adjx,adjy)
 % This function computes position vectors [left, bottom, width, height] in
 % normalized units to position subplots within a parent figure object. An
 % Nx4 matrix is returned in which the i_th row corresponds to the position
@@ -23,7 +23,7 @@ function pos = subplotPos(nr,nc,lpad,rpad,dpad,upad,adj)
 %          subplot.
 %
 % OPTIONAL INPUT
-%    adj - Magnitude of space at the very bottom of the figure reserved
+%   adjx - Magnitude of space at the very bottom of the figure reserved
 %          regardless of the number of rows and the value of 'dpad'. Ideal
 %          for plots with a shared abcissa across vertically stacked
 %          subpanels with a single abcissa text label. If omitted or
@@ -36,12 +36,15 @@ function pos = subplotPos(nr,nc,lpad,rpad,dpad,upad,adj)
 %
 % HISTORY
 % (written)  June 12, 2018
-% (modified) June 24, 2023: Added 'adj' parameter to flexibly create
+% (modified) June 24, 2023: Added 'adjx' parameter to flexibly create
 %                           vertically stacked plots.
+% (modified)  Nov 16, 2023: Added 'adjy' parameter to flexibly create
+%                           horizontally stacked plots.
 %
 %
 %   DHK - June 12, 2018
-if nargin<7, adj = 0; end
+if nargin<8, adjy = 0; end
+if nargin<7, adjx = 0; end
 
 pos = nan(nr*nc,4);
 for i = 1:nr % Rows
@@ -51,8 +54,12 @@ for i = 1:nr % Rows
             1/nc-lpad-rpad...
             1/nr-upad-dpad];
     end
+end 
+if adjx
+    pos(:,4) = pos(:,4)-adjx;
+    pos(:,2) = pos(:,2)+reshape(repmat(1:nr,nc,1),[],1)*adjx;
 end
-if adj
-    pos(:,4) = pos(:,4)-adj;
-    pos(:,2) = pos(:,2)+(1:size(pos,1))'*adj;
+if adjy
+    pos(:,3) = pos(:,3)-adjy;
+    pos(:,1) = pos(:,1)+repmat((nc:-1:1)',nr,1)*adjy;
 end
