@@ -30,6 +30,13 @@ function pos = subplotPos(nr,nc,lpad,rpad,dpad,upad,adjx,adjy)
 %          specified as (0), this extra spacing is not computed (the white
 %          space at the bottom of the figure is simply equal to 'dpad'.
 %               (default = 0)
+%   adjy - Magnitude of space at the very left of the figure reserved
+%          regardless of the number of columns and the value of 'rpad'.
+%          Ideal for plots with a shared abcissa across horizontally
+%          stacked subpanels. If omitted or specified as (0), this extra
+%          spacing is not computed (the white space at the left of the
+%          figure is simply equal to 'rpad'.
+%               (default = 0)
 %
 % OUTPUT
 %  pos - Nx4 matrix containing linearized list of subplot positions
