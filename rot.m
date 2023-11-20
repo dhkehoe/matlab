@@ -19,7 +19,7 @@ if numel(x) ~= numel(y)
 end
 
 if nargin<5
-    deg = 1;
+    deg = 0;
 end
 
 if nargin<4
