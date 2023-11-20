@@ -7,7 +7,7 @@ function B = repmatr(A, M, varargin)
 %       1, 2, 3, 4;...
 %       5, 6, 7, 8;...
 %  ]
-
+%
 % and
 % 
 % M = [2.5, 1], then matrix A is repeated 2 and a half times along the
@@ -27,7 +27,7 @@ function B = repmatr(A, M, varargin)
 %   DHK - Oct. 10, 2023
 
 % Ensure format
-if all(cellfun(@isnumeric,varargin)) && isnumeric(M)
+if all(cellfun(@isnumeric,varargin)) && all(cellfun(@isscalar,varargin)) && isnumeric(M)
 
     % Build size vector
     M = [M, cell2mat(varargin)];
@@ -40,7 +40,7 @@ if all(cellfun(@isnumeric,varargin)) && isnumeric(M)
     M = M(1:end-i);
 
 else
-    error('Replication factors must be numeric.')
+    error('Replication factors must be a numeric vector or a list of numeric scalars.')
 end
 
 % Call repmat with (potentially) extra repeats
