@@ -167,15 +167,12 @@ if isempty(p.domain)
         p.xl = [min(d);max(d)]' + [-1,1].*p.bw(:)*2; % Default to edge of data +/- 2 SDs
     elseif numel(p.xl)==2 % Repeat xlims across both domains
         p.xl = [p.xl(:)';p.xl(:)']; % Repeat; ensure format
-    elseif numel(size(p.xlim))>2 || numel(p.xl)>4  % Wrong number of xlims provided
+    elseif ~all(size(p.xl) == [2,2]) % Wrong number of xlims provided
         error('Optional argument ''xl'' must contain either a 1x2 vector or 2x2 matrix.');
     end
-
     % Now check that 'xl' is sorted
-    for i = 1:2
-        if ~issorted(p.xl(i,:))
-            error('Optional argument ''xl'' must be columnwise sorted in ascending order.');
-        end
+    if ~all(p.xl(:,1)<=p.xl(:,2))
+        error('Optional argument ''xl'' must be in column-wise ascending order.');
     end
 
     % 'npoints' supercedes 'scale'

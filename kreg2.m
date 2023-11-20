@@ -1,7 +1,7 @@
 function [y,x1,x2] = kreg2(d,varargin)
-% Fit a 2-dimensional KDE. The KDE bandwidth and domain can be flexibly and
-% full-specified by the user using optional arguments. Optional arguments
-% are passed using the MATLAB name-pair convention.
+% Fit a 2-dimensional kernel regression. The kernel bandwidth and domain
+% can be flexibly and full-specified by the user using optional arguments.
+% Optional arguments are passed using the MATLAB name-pair convention.
 %
 % USAGE
 %   y = kreg2(d);
@@ -22,40 +22,40 @@ function [y,x1,x2] = kreg2(d,varargin)
 %
 %      bw - A scalar or 1x2 vector specifying the kernel bandwidths in the
 %           first and second dimensions of the data. Scalars are
-%           repeated for both dimensions. Default value is Silverman's
-%           rule-of-thumb bandwidths.
+%           repeated for both dimensions. Default values are kernel
+%           specific (e.g., Silverman's rule-of-thumb for Gaussian kernel).
 %
 %  domain - A matrix or cell array with 2 elements. If a matrix, this
-%           specifies the literal values for both dimenions of the KDE
-%           domain. If a cell array, each element specifies the literal
-%           values of the first and second dimensions of the KDE domain.
-%           Values passed to domain will supercede any values passed to
-%           'xl', 'npoints', or 'scale'. If not provided, the exact domain
-%           is computed from the values of 'xl' and either 'npoints' or
-%           'scale'.
+%           specifies the literal values for both dimenions of the
+%           regression domain. If a cell array, each element specifies the
+%           literal values of the first and second dimensions of the
+%           regression domain. Values passed to domain will supercede any
+%           values passed to 'xl', 'npoints', or 'scale'. If not provided,
+%           the exact domain is computed from the values of 'xl' and either
+%           'npoints' or 'scale'.
 %
 %      xl - A 1x2 or 2x2 matrix specifying the [lower,upper] boundaries of
-%           the KDE domain. Domain dimensions are specified by row. Upper/
-%           lower boundaries are specified by column and must be in
+%           the regression domain. Domain dimensions are specified by row.
+%           Upper/lower boundaries are specified by column and must be in
 %           columnwise ascending order. 1x2 vectors repeat the boundaries
-%           across both KDE domain dimensions. Default is the boundaries of
-%           the data +/- 2 * bandwidths.
+%           across both regression domain dimensions. Default is the
+%           boundaries of the data +/- 2 * bandwidths.
 %
 % npoints - Scalar or 1x2 vector specifying the number of evenly spaced
 %           points to use between the boundaries of the first and second
-%           dimensions of the KDE domain. Scalars are repeated along both
-%           dimensions. 'npoints' supercedes values passed to 'scale'.
+%           dimensions of the regression domain. Scalars are repeated along
+%           both dimensions. 'npoints' supercedes values passed to 'scale'.
 %           Default is 100 points along each dimension.
 %
 %   scale - Scalar or 1x2 vector specifying the spatial scale (distance
 %           between evenly spaced points) along the first and second
-%           dimensions of the KDE domain. Scalars are repeated along both
-%           dimensions. Default is the 1% of the range of the domain.
+%           dimensions of the regression domain. Scalars are repeated along
+%           both dimensions. Default is the 1% of the range of the domain.
 %
 %
 %
 % OUTPUT
-%  y - The height of the fitted KDE across the 2D domain.
+%  y - The fitted kernel regression across the 2D domain.
 % x1 - The 2D values of the first data dimension.
 % x2 - The 2D values of the second data dimension.
 %   
@@ -158,19 +158,16 @@ if isempty(p.domain)
         p.xl = [min(d);max(d)]' + [-1,1].*p.bw(:)*2; % Default to edge of data +/- 2 SDs
     elseif numel(p.xl)==2 % Repeat xlims across both domains
         p.xl = [p.xl(:)';p.xl(:)']; % Repeat; ensure format
-    elseif numel(size(p.xlim))>2 || numel(p.xl)>4  % Wrong number of xlims provided
+    elseif ~all(size(p.xl) == [2,2]) % Wrong number of xlims provided
         error('Optional argument ''xl'' must contain either a 1x2 vector or 2x2 matrix.');
     end
-
     % Now check that 'xl' is sorted
-    for i = 1:2
-        if ~issorted(p.xl(i,:))
-            error('Optional argument ''xl'' must be columnwise sorted in ascending order.');
-        end
+    if ~all(p.xl(:,1)<=p.xl(:,2))
+        error('Optional argument ''xl'' must be in column-wise ascending order.');
     end
 
     % 'npoints' supercedes 'scale'
-    if ~isempty(p.scale) || ~isempty(p.npoints)
+    if ~isempty(p.scale) && ~isempty(p.npoints)
         warning('Optional argument ''npoints'' was provided, so optional argument ''scale'' is ignored.');
     end
 
