@@ -9,7 +9,7 @@ x = shiftdim(x,dim-1);
 s = size(x);
 x = x(:);
 
-if numel(s)==2 && any(s==1) && nargin<2 % this is typical matlab behavior
+if isvector(s) && nargin<2 % this is typical matlab behavior
     y = fun( x(~isnan(x)) );
     return
 end
