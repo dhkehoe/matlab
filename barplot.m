@@ -1,4 +1,4 @@
-function [ah,lh] = barplot(y,e,varargin)
+function [ah,lh,x] = barplot(y,e,varargin)
 % Contruct bar graph with flexible, intuitive settings for data with
 % N x M conditions. M conditions are plotted along x-axis. N conditions are
 % specified in the legend and grouped together at each level of M. Returns
@@ -76,6 +76,9 @@ addOptional(p,'whisklen',nan,@(x) isscalar(x) && isnumeric(x) && x>=0 && x<=1); 
 addOptional(p,'constr',[],@(x) all(iscell(x)) && length(x)==size(y,2)); % Condition labels (along x-axis)
 addOptional(p,'grpstr',[],@(x) iscell(x) && length(x)==size(y,1)); % Group labels (legend)
 addOptional(p,'linewidth',3,@(x) isnumeric(x) && isscalar(x) && x>=0); % Error bar line width
+addOptional(p,'position',[],@(x) isnumeric(x) && numel(x)==4); % Legend position argument
+addOptional(p,'location',[],@ischar); % Legend location argument
+addOptional(p,'autoupdate','off',@ischar); % Legend autoupdate argument
 
 parse(p,varargin{:}); % Parse input values
 p = p.Results;
@@ -100,7 +103,11 @@ xl = [min(x(:))-p.spacing*p.xpad-p.barwidth/2, max(x(:))+p.spacing*p.xpad+p.barw
 if ~isempty(p.grpstr), h = 1:size(x,1); end
 
 %% Plot
-hold on,
+
+% Check if hold is on, then force it on
+ih = ishold;
+hold on;
+
 for i =1:size(x,1)
     % Get plot handles for legend if necessary
     if ~isempty(p.grpstr), h(i) = bar(0,0,'FaceColor',p.col(i,:)); end
@@ -138,9 +145,20 @@ xlim(xl);
 % Set legend if necessary
 if ~isempty(p.grpstr)
     lh = legend(h,p.grpstr); % Return legend handle
+
+    % Adjust position?
+    if ~isempty(p.position)
+        lh.Position = p.position;
+    elseif ~isempty(p.location)
+        lh.Location = p.location;
+    end
+    lh.AutoUpdate = p.autoupdate;
 end
 
 % Return the axes handle
 ah = gca;
 
-hold off; % Turn hold back off
+% Turn hold back off
+if ~ih
+    hold off;
+end
