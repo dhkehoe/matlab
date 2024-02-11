@@ -103,16 +103,20 @@ t = [nan; mod( atan2( y(2:end)-y(1:end-1) , x(2:end)-x(1:end-1) ), 2*pi)];
 seqs = sequence(v >= p.minVel & circdistvector(t) <= p.maxTheta, nSamps);
 
 % Preallocate data structure
-sacs = repmat( struct('bins',[],'x',[],'y',[],'theta',[],...
+sacs = repmat( struct('bins',[],'x',[],'y',[],'theta',[],'deviation',[],...
     'duration',[],'amplitude',[],'avgVel',[],'peakVel',[],...
-    'avgAcc',[],'peakAcc',[]),size(seqs,1),1);
+    'avgAcc',[],'peakAcc',[],'curve',[]),size(seqs,1),1);
 
 %% Compute kinematic metrics for each potential saccade
 for i = 1:numel(sacs)
-    sacs(i).bins = seqs(i,1):seqs(i,2);
-    sacs(i).x = x(sacs(i).bins);
-    sacs(i).y = y(sacs(i).bins);
-    sacs(i).theta = t( sacs(i).bins ); % instantaneous polar angle
+
+    % Continuous metrics
+    sacs(i).bins = seqs(i,1):seqs(i,2); % Time bins (indices)
+    sacs(i).x = x(sacs(i).bins); % x position (degrees)
+    sacs(i).y = y(sacs(i).bins); % y position (degrees)
+    sacs(i).theta = t( sacs(i).bins ); % Instantaneous polar angle
+    sacs(i).deviation = deviation(sacs(i).x,sacs(i).y);
+
     % Summary statistics:
     sacs(i).direction = mod(atan2( sacs(i).y(end)-sacs(i).y(1) , sacs(i).x(end)-sacs(i).x(1) ),2*pi);
     sacs(i).duration = seqs(i,3) * p.sampRate;
@@ -121,7 +125,8 @@ for i = 1:numel(sacs)
     sacs(i).peakVel = max(v(seqs(i,1):seqs(i,2)));
     sacs(i).avgAcc = mean(a(seqs(i,1):seqs(i,2)));
     sacs(i).peakAcc = max(a(seqs(i,1):seqs(i,2)));
-     
+    sacs(i).curve = trapz(sacs(i).deviation);
+
     % Here we can check additional kinematic conditions to reject saccades:
     if sacs(i).amplitude < p.minAmp ||... (1) Minimum amplitude
             sacs(i).peakVel < p.minPeakVel ||... (2) Minimum peak velocity
@@ -136,3 +141,20 @@ sacs(all(isnan(seqs),2)) = []; % Trim out rejected saccades before returning
 %% Wrap circdist() function for contiguous comparisons
 function d = circdistvector(t)
 d = [nan; reshape( circdist(t(2:end),t(1:end-1)), [],1)];
+
+%% Compute saccade deviations about a straight line between start- and endpoint
+function d = deviation(x,y)
+
+% Translate to origin
+x = x-x(1);
+y = y-y(1);
+
+% Rotate, such that endpoint falls on x axis
+t = atan2(y,x);
+t = t-t(end);
+
+% Compute y-deviations (deviations about a straight line connecting the
+% start- and endpoint of the saccade). I've flipped the sign so that
+% clockwise deviations are positive and counter-clockwise deviations are
+% negative
+d = -sin(t) .* sqrt(x.^2+y.^2);
