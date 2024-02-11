@@ -134,7 +134,7 @@ end
 
 % Get locations for printing category labels
 if ~isempty(p.constr)
-    set(gca,'XTick',mean(x),'XTickLabel',p.constr);
+    set(gca,'XTick',mean(x,1),'XTickLabel',p.constr);
 else
     set(gca,'XTick',[]);
 end
@@ -143,7 +143,9 @@ end
 xlim(xl);
 
 % Set legend if necessary
-if ~isempty(p.grpstr)
+if isempty(p.grpstr)
+    lh = [];
+else
     lh = legend(h,p.grpstr); % Return legend handle
 
     % Adjust position?
