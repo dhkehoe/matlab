@@ -91,7 +91,7 @@ m = size(data);
 
 % Check that 'col' can logically index column of 'data'
 if numel(col) ~= m(2) && isa(fun,'function_handle')
-    error('When argument ''fun'' is a function handle, argument ''col'' must be a logical vector to index a column of ''data''.');
+    error('When argument ''fun'' is a function handle, argument ''col'' must be a logical vector of equal length to the number of columns in ''data'' so to index a column of ''data''.');
 end
 
 % Get the number of factors
@@ -102,7 +102,7 @@ lvls = cell(1,n);
 for i = 1:n
     % Check that the i_th factor can logically index column of 'data'
     if numel(varargin{i}) ~= m(2)
-        error('Arguments sjtable(data,col,fun, C1,...Cn) ');
+        error('Argument C%d in sjtable(data,col,fun, C1,...,Cn) has number of elements not equal to number of columns in ''data''.',i);
     end
 
     % Get the unique levels
@@ -134,7 +134,9 @@ for i = 1:numel(y)
         % Or, if 'fun' is a numeric vector, compute the proportion of true
         % indices in this cell to the true indices across marginalized
         % cells specified by factors 'fun'.
-        if numel(fun)==n || isempty(fun)
+        if isempty(fun)
+            y(i) = sum(all(idx,2));
+        elseif numel(fun)==n
             y(i) = sum(all(idx,2)) / m(1);
         else
             y(i) = sum(all(idx,2)) / sum(all(idx(:,fun),2));
