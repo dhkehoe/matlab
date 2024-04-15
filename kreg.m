@@ -82,14 +82,14 @@ else
 end
 
 ip = inputParser;
-validateArg = @(arg)all(isnumeric(arg))&&numel(arg)==1;
+validateArg = @(arg)isnumeric(arg)&&isscalar(arg);
 addOptional(ip,'bw',[],validateArg), % Kernel bandwidth
 addOptional(ip,'knn',[],validateArg), % Weight data by kernel generated pdf? (true/false)
-addOptional(ip,'domain',[],@(arg)all(isnumeric(arg))), % Exact x domain
+addOptional(ip,'domain',[],@(arg)isnumeric(arg)), % Exact x domain
 addOptional(ip,'scale',[],validateArg), % Distance between points on x domain
 addOptional(ip,'npoints',[],validateArg), % # of points on x domain
-addOptional(ip,'xl',[min(x) max(x)],@(arg)all(isnumeric(arg))&&numel(arg)==2), % x domain boundaries [lower,upper]
-addOptional(ip,'kernel','gauss',@(arg)all(ischar(arg))), % Kernel choice
+addOptional(ip,'xl',[min(x) max(x)],@(arg)isnumeric(arg)&&numel(arg)==2), % x domain boundaries [lower,upper]
+addOptional(ip,'kernel','gauss',@(arg)ischar(arg)), % Kernel choice
 parse(ip,varargin{:});
 ip = ip.Results;
 

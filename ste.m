@@ -1,15 +1,16 @@
 function e = ste(varargin)
 
-% Determine the dimension size that gives 'n' in the denominator
+% Determine the dimension whose size gives 'n' in the denominator
 if 3 <= numel(varargin)
-    % Case 1: it's provided
+    % Case 1: 'dim' argument is provided
     dim = varargin{3};
 else
-    if isvector(varargin{1}) && ~isscalar(varargin{1})
-        % Case 2: not provided; data is vector; use first non-zero dimension
-        dim = find( size(varargin{1})==numel(varargin{1}) );
+    s = size(varargin{1});
+    if sum(s>1)==1
+        % Case 2: 'dim' argument is not provided; data is a vector; use dimension whose size is greater than one 
+        dim = find( s==numel(varargin{1}) );
     else
-        % Case 3: not provided; data is not a vector; use dimension 1
+        % Case 3: 'dim' argument is not provided; data is not a vector; use dimension 1
         dim = 1;
     end
 end
