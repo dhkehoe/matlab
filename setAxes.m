@@ -218,7 +218,7 @@ end
 plot([0,0]+yPos,yAxisLine,'Color',p.color,'LineWidth',p.linewidth);
 
 % Keep track of the width of tick labels
-maxLabelWidth = xAxisLine(1);
+maxLabelWidth = 0; %xAxisLine(1);
 
 % Ticks/labels
 for i = 1:numel(p.ytick)
@@ -245,20 +245,21 @@ for i = 1:numel(p.ytick)
                 'HorizontalAlignment','Left','VerticalAlignment','Middle');
         end
         % Update the maximum width of y tick labels
+        set(h,'Units','normalized');
         if h.Extent(1) < maxLabelWidth
             maxLabelWidth = h.Extent(1);
             if p.ytick(i) < 0 % If there is a leading negative sign, text() adds way too much extra padding
-                maxLabelWidth = maxLabelWidth+range(xAxisLine).*.01;
+                maxLabelWidth = maxLabelWidth + .01;
             end
         end
     end
 end
 % Draw axis label
 if ~isempty(p.ylabel)
-    text(maxLabelWidth-range(xAxisLine)*.005,mean(yAxisLine),...
-        p.ylabel,'Rotation',90,...
+    text(maxLabelWidth*2,.5,...
+        p.ylabel,'Units','normalized','Rotation',90,...
         'HorizontalAlignment','Center', 'VerticalAlignment','Bottom',...
-        'FontSize',p.fontsize,'LineStyle','none','Interpreter',p.yinterpreter);
+        'FontSize',p.fontsize,'LineStyle','-','Interpreter',p.yinterpreter);
 end
 
 %% Finish

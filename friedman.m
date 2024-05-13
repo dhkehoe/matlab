@@ -1,4 +1,6 @@
 function [p,tbl,stats] = friedman(x,reps,displayopt)
+x(any(isnan(x),2),:) = [];
+
 if numel(size(x))~=2, error('''x'' must be a 2D matrix where rows indicate subjects and columns indicate conditions'); end
 [n,k] = size(x);
 r = nan(size(x));

@@ -31,10 +31,23 @@ end
 % Check for 'whiskerlength' optional arg, which cannot be passed to plot()
 wl = 0;
 for i = 1:numel(varargin)
-    if i<numel(varargin) && ischar(varargin{i}) && contains(lower(varargin{i}),'whiskerlength')
+    if i<numel(varargin) && ischar(varargin{i}) && strcmpi(varargin{i},'whiskerlength')
         wl = varargin{i+1};
         if ~( isnumeric(wl) && isscalar(wl) )
             error('Optional argument ''whiskerLength'' must be a numeric scalar.');
+        end
+        varargin(i:i+1) = [];
+        break;
+    end
+end
+
+% Check for 'line' optional arg, which cannot be passed to plot()
+lin = 1;
+for i = 1:numel(varargin)
+    if i<numel(varargin) && ischar(varargin{i}) && strcmpi(varargin{i},'line')
+        lin = varargin{i+1};
+        if ~( isnumeric(wl) && isscalar(wl) )
+            error('Optional argument ''line'' must be a numeric scalar.');
         end
         varargin(i:i+1) = [];
         break;
@@ -54,7 +67,14 @@ if wl
     w = x + [-1;1] .* wl/2;
 end
 
-h = plot(x, m, varargin{:});
+% Draw means
+if lin
+    h = plot(x, m, varargin{:});
+else
+    h = [];
+end
+
+% Draw error bars
 for i = 1:size(y,2)
     plot([0;0]+x(i), e(:,i), varargin{:}, 'Marker','none'); % Override the marker property
     if wl
