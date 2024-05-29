@@ -21,6 +21,7 @@ addOptional(p,'xinterpreter','tex',@ischar);
 addOptional(p,'yaxisline',[],@(x)all(isnumeric(x))&&numel(x)==2&&x(1)<=x(2));
 addOptional(p,'yaxislocation','left',@(x)any(strcmp(x,{'left','right','origin'})));
 addOptional(p,'ylabel',[],@ischar);
+addOptional(p,'ylabeloffset',.05,@(x)isscalar(x)&0<=x);
 addOptional(p,'ylim',[],@(x) all(isnumeric(x))&&numel(x)==2&&x(1)<=x(2));
 addOptional(p,'yticklabel',[],@(x)iscell(x)||isempty(x));
 addOptional(p,'ytick',[],@(x)all(isnumeric(x))&&issorted(x));
@@ -29,6 +30,16 @@ addOptional(p,'yinterpreter','tex',@ischar);
 parse(p,varargin{:}); 
 d = p.UsingDefaults;
 p = p.Results;
+
+%% Make sure all is well with the axes handle
+if ~ishandle(p.handle)
+    error('Invalid axes handle');
+end
+% This could be a double, which may cause problems later, so convert to a
+% handle object
+if isa(p.handle,'double')
+    p.handle = get(p.handle,'Children').Parent;
+end
 
 %% Set defaults
 % Ticks
@@ -256,7 +267,7 @@ for i = 1:numel(p.ytick)
 end
 % Draw axis label
 if ~isempty(p.ylabel)
-    text(maxLabelWidth*2,.5,...
+    text(maxLabelWidth-p.ylabeloffset,.5,...
         p.ylabel,'Units','normalized','Rotation',90,...
         'HorizontalAlignment','Center', 'VerticalAlignment','Bottom',...
         'FontSize',p.fontsize,'LineStyle','-','Interpreter',p.yinterpreter);
