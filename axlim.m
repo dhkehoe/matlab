@@ -1,4 +1,4 @@
-function [lim, tix] = axlim(mm,units,pad) 
+function [lim, tix, lab] = axlim(mm,units,pad) 
 
 if any(isnan(mm) | isinf(mm))
     error('''m'' must not contain NaN or Inf values.');
@@ -32,7 +32,7 @@ lim = mm + [-1,1] * range(mm)*pad;
 % [min,max] number of 'units' to capture all the data
 tix = mm-mod(mm,units) + [0,units] .* (mod(mm,units)~=0);
 
-%
+% Out-of-bounds adjustments
 if tix(1) < lim(1)
     tix(1) = tix(1)+units;
 end
@@ -50,3 +50,6 @@ end
 
 % Generate full set of ticks, adjusting for precision errors
 tix = round((tix(1) : units : tix(2))/units)*units;
+
+% Return string labels
+lab = cellstr(num2str(tix'));
