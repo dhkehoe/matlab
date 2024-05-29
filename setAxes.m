@@ -16,6 +16,7 @@ addOptional(p,'xlabel',[],@ischar);
 addOptional(p,'xlim',[],@(x) all(isnumeric(x))&&numel(x)==2&&x(1)<=x(2));
 addOptional(p,'xticklabel',[],@(x)iscell(x)||isempty(x));
 addOptional(p,'xtick',[],@(x)all(isnumeric(x))&&issorted(x));
+addOptional(p,'xtickrotation',0,@(x)isscalar(x)&&isnumeric(x));
 addOptional(p,'xinterpreter','tex',@ischar);
 % Y axis properties
 addOptional(p,'yaxisline',[],@(x)all(isnumeric(x))&&numel(x)==2&&x(1)<=x(2));
@@ -25,6 +26,7 @@ addOptional(p,'ylabeloffset',.05,@(x)isscalar(x)&0<=x);
 addOptional(p,'ylim',[],@(x) all(isnumeric(x))&&numel(x)==2&&x(1)<=x(2));
 addOptional(p,'yticklabel',[],@(x)iscell(x)||isempty(x));
 addOptional(p,'ytick',[],@(x)all(isnumeric(x))&&issorted(x));
+addOptional(p,'ytickrotation',0,@(x)isscalar(x)&&isnumeric(x));
 addOptional(p,'yinterpreter','tex',@ischar);
 
 parse(p,varargin{:}); 
@@ -44,11 +46,11 @@ end
 %% Set defaults
 % Ticks
 if any(strcmp(d,'xtick')) % Using the default (not the same as user passing an empty set)
-    p.xtick = get(gca,'XTick'); % piggy-back off of MATLAB here
+    p.xtick = get(p.handle,'XTick'); % piggy-back off of MATLAB here
 %     if ~isempty(p.xaxisline), p.xtick = p.xtick( p.xaxisline(1) <= p.xtick & p.xtick <= p.xaxisline(2) ); end
 end
 if any(strcmp(d,'ytick')) % Using the default (not the same as user passing an empty set)
-    p.ytick = get(gca,'YTick');
+    p.ytick = get(p.handle,'YTick');
 %     if ~isempty(p.yaxisline), p.ytick = p.ytick( p.yaxisline(1) <= p.ytick & p.ytick <= p.yaxisline(2) ); end
 end
 
@@ -157,8 +159,8 @@ if ~isempty(p.xaxisline), xAxisLine = p.xaxisline; end
 if ~isempty(p.yaxisline), yAxisLine = p.yaxisline; end
     
 % Axes object position
-units = get(p.handle,'units');
-set(p.handle,'units','normalized');
+units = get(p.handle,'Units');
+set(p.handle,'Units','normalized');
 axpos = get(p.handle,'Position');
 
 % Ensure ticks are the same length on screen for both axes
@@ -179,7 +181,7 @@ hold(p.handle,'on');
 %% Drawing routines for x axis
     
 % Axis line
-plot(xAxisLine,[0,0]+xPos,'color',p.color,'linewidth',p.linewidth);
+plot(xAxisLine,[0,0]+xPos,'Color',p.color,'Linewidth',p.linewidth);
 
 % Keep track of the height of tick labels
 maxLabelHeight = yAxisLine(1);
@@ -189,24 +191,30 @@ for i = 1:numel(p.xtick)
     % Draw ticks
     if strcmp(p.xaxislocation,'bottom')
         plot([0,0]+p.xtick(i),[xPos,xPos+xtickLength],... ensure the same length ticks on both axes
-            'color',p.color,'linewidth',p.linewidth);
+            'Color',p.color,'LineWidth',p.linewidth);
     elseif strcmp(p.xaxislocation,'top')
         plot([0,0]+p.xtick(i),[xPos,xPos-range(p.ylim)*p.ticklength*axpos(3)/axpos(4)],... ensure the same length ticks on both axes
-            'color',p.color,'linewidth',p.linewidth);
+            'Color',p.color,'LineWidth',p.linewidth);
     elseif strcmp(p.xaxislocation,'origin')
         plot([0,0]+p.xtick(i),[0,0]+xPos+xtickLength/2*[-1,1],... ensure the same length ticks on both axes
-            'color',p.color,'linewidth',p.linewidth);
+            'Color',p.color,'LineWidth',p.linewidth);
     end
     % Draw labels
     if ~isempty(p.xticklabel)
         if any(strcmp(p.xaxislocation,{'bottom','origin'}))
             h = text(p.xtick(i),xPos-range(p.ylim)*p.ticklength,p.xticklabel{i},...
-                'fontsize',p.fontsize,'Interpreter',p.xinterpreter,...
-                'horizontalalignment','center','verticalalignment','top');
+                'FontSize',p.fontsize,'Interpreter',p.xinterpreter,'Rotation',p.xtickrotation,...
+                'HorizontalAlignment','center','VerticalAlignment','top');
         elseif strcmp(p.xaxislocation,'top')
-            h = text(p.xtick(i),xPos+range(p.ylim)*p.ticklength,p.xticklabel{i},...
-                'fontsize',p.fontsize,'Interpreter',p.xinterpreter,...
-                'horizontalalignment','center','verticalalignment','bottom');
+            if 45 <= p.xtickrotation
+                h = text(p.xtick(i),xPos+range(p.ylim)*p.ticklength,p.xticklabel{i},...
+                    'FontSize',p.fontsize,'Interpreter',p.xinterpreter,'Rotation',p.xtickrotation,...
+                    'HorizontalAlignment','left','VerticalAlignment','middle');
+            else
+                h = text(p.xtick(i),xPos+range(p.ylim)*p.ticklength,p.xticklabel{i},...
+                    'FontSize',p.fontsize,'Interpreter',p.xinterpreter,'Rotation',p.xtickrotation,...
+                    'HorizontalAlignment','center','VerticalAlignment','bottom');
+            end
         end
         % Update the maximum height of x tick labels
         if h.Extent(2) < maxLabelHeight
@@ -218,9 +226,9 @@ end
 % Axis label
 if ~isempty(p.xlabel)
     text(mean(xAxisLine),maxLabelHeight,...
-        p.xlabel,'Rotation',0,'Interpreter',p.xinterpreter,...
-        'HorizontalAlignment','Center', 'VerticalAlignment','Top',...
-        'FontSize',p.fontsize,'LineStyle','none');
+            p.xlabel,'Rotation',0,'Interpreter',p.xinterpreter,...
+            'HorizontalAlignment','Center', 'VerticalAlignment','Top',...
+            'FontSize',p.fontsize,'LineStyle','none');
 end
 
 %% Drawing routines for y axis
