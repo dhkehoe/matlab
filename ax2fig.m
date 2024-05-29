@@ -52,10 +52,10 @@ pos = get(han,'Position');
 % For relevant component, adjust position/get axes limits in axes object units
 if lower(com)=='x'
     axpos = [0,pos(3)]+pos(1);
-    lim = xlim;
+    lim = get(han,'XLim');
 elseif lower(com)=='y'
     axpos = [0,pos(4)]+pos(2);
-    lim = ylim;
+    lim = get(han,'YLim');
 else
     error('String arg ''com'' specifies whether to compute position of the x or y component. Valid inputs: ''x'' or ''y''');
 end
