@@ -1,8 +1,27 @@
 function h = plotste(x,y,varargin)
+% 
+%
+% USAGE
+%   h = plotste(y);
+%   h = plotste(x, y);
+%   h = plotste(y, 'OptionalArgName',optionalArgValue, ...);
+%   h = plotste(x, y, 'OptionalArgName',optionalArgValue, ...);
+%
+% INPUT
+%   y - 
+%
+% OPTIONAL INPUT
+%               x -
+%   whiskerlength -
+%            line - 
+%            type - 
+%         weights - 
+%
+% OUTPUT
+%   h - 
 %
 %
-%
-%
+%   DHK - June 12, 2024
 
 %% Manage input
 
@@ -28,44 +47,47 @@ else % Ensure x is a row vector
     x = reshape(x,1,numel(x));
 end
 
-% Check for 'whiskerlength' optional arg, which cannot be passed to plot()
-wl = 0;
-for i = 1:numel(varargin)
-    if i<numel(varargin) && ischar(varargin{i}) && strcmpi(varargin{i},'whiskerlength')
-        wl = varargin{i+1};
-        if ~( isnumeric(wl) && isscalar(wl) )
-            error('Optional argument ''whiskerLength'' must be a numeric scalar.');
-        end
-        varargin(i:i+1) = [];
-        break;
-    end
+% Retrive optional arguments that cannot be passed to plot()
+[varargin, wl  ] = inputChecker(varargin,'whiskerlength',0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''WhiskerLength'' must be a numeric scalar.');
+[varargin, lin ] = inputChecker(varargin,'line',         1, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''Line'' must be a numeric scalar.');
+[varargin, type] = inputChecker(varargin,'type',    'cont', @(x)ischar(x)&&any(contains(lower(x),{'cont','prop'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
+[varargin, n   ] = inputChecker(varargin,'weights',     [], @(x)isnumeric(x)&&all(size(x)==size(y)),               'Optional argument ''Weights'' must be a matrix with the same shape as ''y''.');
+
+% Convert 'type' to an integer
+type = find(strcmpi(type,{'cont','prop'})); 
+
+% Set additional error checking + default behavior
+if type==2 && isempty(n) % Must provide 'n' if data is proportional
+    error('When optional argument ''Type'' is ''prop'', optional argument ''Weights'' must be provided.');
+end
+if ~isempty(n) % If 'weights' arg is provided, 'type' is set to proportional data
+    type = 2;
 end
 
-% Check for 'line' optional arg, which cannot be passed to plot()
-lin = 1;
-for i = 1:numel(varargin)
-    if i<numel(varargin) && ischar(varargin{i}) && strcmpi(varargin{i},'line')
-        lin = varargin{i+1};
-        if ~( isnumeric(wl) && isscalar(wl) )
-            error('Optional argument ''line'' must be a numeric scalar.');
-        end
-        varargin(i:i+1) = [];
-        break;
-    end
-end
+%% Compute plotting variables
 
 % Save initial hold state, temporarily turn hold on
 ish = ishold;
 hold on;
 
-%% Plot
-m = nanmean(y);                                         %#ok
-e = m + [-1;1] .* nanstd(y) ./ sqrt( sum(~isnan(y)) );  %#ok
+% Compute means and standard errors
+switch type
+    case 1
+        m = nanmean(y); %#ok
+        e = nanste(y);
+    case 2
+        s = nansum(n); %#ok
+        m = nansum( y.* n ) ./ s; %#ok
+        e = sqrt( m.*(1-m) ./ s );
+end
+e = m + [-1;1] .* e;
 
 % Compute whiskers
 if wl
     w = x + [-1;1] .* wl/2;
 end
+
+%% Plot
 
 % Draw means
 if lin
@@ -86,4 +108,29 @@ end
 %% Restore initial hold state
 if ~ish
     hold off;
+end
+
+%% Utilities
+function [varg, val] = inputChecker(varg,vstr,dval,efun,estr)
+% This function works quite similar to addOptional(). It takes a varargin
+% argument 'varg' and the name of an optional argument specified as a
+% string 'vstr'. It searches varargin for the optional argument and returns
+% the value for this optional argument upon exiting the function. The value
+% is assumed to be the subsequent element of varargin after the specifer.
+% The specifier and subsequent value from varargin are trimmed and this
+% trimmed varargin is returned upon exiting. Additionally, the value is
+% defaulted to 'dval' and subjected to an integrity check 'efun'. 'efun' is
+% a handle to an inline function that returns true when the value is
+% acceptable. If the value is not acceptable according to 'efun', an error
+% is throw. The error string is 'estr'.
+val = dval;
+for i = 1:numel(varg)
+    if i<numel(varg) && ischar(varg{i}) && strcmpi(varg{i},vstr)
+        val = varg{i+1};
+        if ~efun(val)
+            error(estr);
+        end
+        varg(i:i+1) = [];
+        break;
+    end
 end
