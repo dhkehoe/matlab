@@ -37,4 +37,8 @@ h = plot(x,y,varargin{:});
 if ~strcmpi('FaceColor',varargin0)
     varargin0 = [varargin0, 'FaceColor', h.Color];
 end
-fill([x,fliplr(x)],[y+e,fliplr(y-e)],varargin0{:});
+if size(e,1)==1
+    fill([x,fliplr(x)],[y-e,fliplr(y+e)],varargin0{:});
+else
+    fill([x,fliplr(x)],[e(1,:),fliplr(e(2,:))],varargin0{:});
+end
