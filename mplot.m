@@ -1,8 +1,8 @@
 function varargout = mplot(Z,varargin)
+% Needs documenting...
 %
 %
-%
-%
+%   DHK - June 12, 2024
 
 
 %% Manage input
@@ -127,6 +127,12 @@ xpos = [  pos(1), p.dpad,             pos(3), 1-p.size(2)-p.apad];
 ypos = [  p.lpad, pos(2), 1-p.size(1)-p.apad,             pos(4)];
 
 %% Make the marginal data axes equally scaled
+if size(p.zlim,1)==1
+    p.zlim = repmat(p.zlim,2,1);
+end
+if size(p.ztick,1)==1
+    p.ztick = repmat(p.ztick,2,1);
+end
 if p.equalaxeslim
     [zl,ztick] = axlim(rangei([mean(Z,1),mean(Z,2)']));
     if all(isnan(p.zlim(:)))
@@ -159,17 +165,17 @@ plot(p.x, mean(Z,1), p.lineformat{:});
 xlabel(p.xlabel);
 ylabel(p.zlabel);
 xlim(p.xlim);
-ylim(p.zlim);
-set(ax(2),'XTick',p.xtick,'XTickLabels',p.xticklabels,'YTick',p.ztick,'FontSize',p.fontsize);
+ylim(p.zlim(1,:));
+set(ax(2),'XTick',p.xtick,'XTickLabels',p.xticklabels,'YTick',p.ztick(1,:),'FontSize',p.fontsize);
 
 %% Marginal X2
 ax(3) = subplot('Position',ypos); hold on;
 plot(mean(Z,2), p.y, p.lineformat{:});
 xlabel(p.zlabel);
 ylabel(p.ylabel);
-xlim(p.zlim);
+xlim(p.zlim(2,:));
 ylim(p.ylim);
-set(ax(3),'XAxisLocation','top','XTick',p.ztick,'YTick',p.ytick,'YTickLabels',p.yticklabels,'FontSize',p.fontsize);
+set(ax(3),'XAxisLocation','top','XTick',p.ztick(2,:),'YTick',p.ytick,'YTickLabels',p.yticklabels,'FontSize',p.fontsize);
 
 %% Return handles
 if nargout
