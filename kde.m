@@ -56,10 +56,10 @@ switch kernel
         k = @(x,x0) (x0-p.bw/2<=x & x<=x0+p.bw/2)./p.bw;
     case 3 % (Positive) exponential decay kernel
         if isempty(p.bw), p.bw = std(d)/3; end
-        k = @(x,x0) exp(-abs(x-x0)/p.bw) .* (x-x0>=0) ./ (p.bw);
+        k = @(x,x0) exp(-abs(x-x0)/p.bw) .* (x-x0<=0) ./ (p.bw);
     case 4 % (Positive) half Gaussian kernel
         if isempty(p.bw), p.bw = (.9*min([std(d) iqr(d)/1.34])*numel(d)^(-1/5))/2; end
-        k = @(x,x0) normpdf(x,x0,p.bw) .* (x-x0>=0) .* 2;
+        k = @(x,x0) normpdf(x,x0,p.bw) .* (x-x0<=0) .* 2;
     case 5 % triangle
         if isempty(p.bw), p.bw = std(d); end
         k = @(x,x0) (p.bw-abs(x-x0))./p.bw.^2 .* (abs(x-x0)<=p.bw);
