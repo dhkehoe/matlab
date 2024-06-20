@@ -1,10 +1,10 @@
-function [r2,F,p] = linreg(yhat,y,df)
+function [r2,F,p,sse] = linreg(yhat,y,df)
 yhat=yhat(:);
 y=y(:);
 
 if nargin < 3 % no df provided --> yhat is actually x and no model has been fit
     yhat = polynom(yhat,polyfit(yhat,y,1)); % assume linear model, fit here
-    df = [1 numel(y)-1];
+    df = [1, numel(y)-1];
 end
 
 sse = sum((yhat-y).^2);
