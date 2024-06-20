@@ -52,6 +52,7 @@ end
 [varargin, lin ] = inputChecker(varargin,'line',         1, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''Line'' must be a numeric scalar.');
 [varargin, type] = inputChecker(varargin,'type',    'cont', @(x)ischar(x)&&any(contains(lower(x),{'cont','prop'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
 [varargin, n   ] = inputChecker(varargin,'weights',     [], @(x)isnumeric(x)&&all(size(x)==size(y)),               'Optional argument ''Weights'' must be a matrix with the same shape as ''y''.');
+[varargin, ign ] = inputChecker(varargin,'ignoreinf',    0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''IgnoreInf'' must be a logical scalar.');
 
 % Convert 'type' to an integer
 type = find(strcmpi(type,{'cont','prop'})); 
@@ -73,11 +74,30 @@ hold on;
 % Compute means and standard errors
 switch type
     case 1
-        m = nanmean(y); %#ok
-        e = nanste(y);
+        if ign
+            i = ~(isinf(y)|isnan(y));
+            m = nan(1,size(y,2));
+            e = m;
+            for j = 1:numel(m)
+                m(j) = mean(y(i(:,j),j));
+                e(j) = sqrt(  sum( (y(i(:,j),j)-m(j)).^2 ) ./ (sum(i(:,j))-1) ./sum(i(:,j))  );
+            end
+        else
+            m = nanmean(y); %#ok
+            e = nanste(y);
+        end
     case 2
-        s = nansum(n); %#ok
-        m = nansum( y.* n ) ./ s; %#ok
+        if ign
+            i = ~(isinf(y)|isnan(y));
+            s = sum(i);
+            m = nan(1,size(y,2));
+            for j = 1:numel(m)
+                m(j) = sum(y(i(:,j),j)) ./ s(j);
+            end
+        else
+            s = nansum(n); %#ok
+            m = nansum( y.* n ) ./ s; %#ok            
+        end
         e = sqrt( m.*(1-m) ./ s );
 end
 e = m + [-1;1] .* e;
@@ -98,10 +118,10 @@ end
 
 % Draw error bars
 for i = 1:size(y,2)
-    plot([0;0]+x(i), e(:,i), varargin{:}, 'Marker','none'); % Override the marker property
+    plot([0;0]+x(i), e(:,i), varargin{:}, 'Marker','none','Color',h.Color); % Override the marker property, ensure color matches
     if wl
-        plot(w(:,i), [0;0]+e(1,i), varargin{:}, 'Marker','none');
-        plot(w(:,i), [0;0]+e(2,i), varargin{:}, 'Marker','none');
+        plot(w(:,i), [0;0]+e(1,i), varargin{:}, 'Marker','none','Color',h.Color);
+        plot(w(:,i), [0;0]+e(2,i), varargin{:}, 'Marker','none','Color',h.Color);
     end
 end
 
