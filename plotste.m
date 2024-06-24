@@ -118,10 +118,10 @@ end
 
 % Draw error bars
 for i = 1:size(y,2)
-    plot([0;0]+x(i), e(:,i), varargin{:}, 'Marker','none','Color',h.Color); % Override the marker property, ensure color matches
+    plot([0;0]+x(i), e(:,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color); % Override the marker property, ensure color matches
     if wl
-        plot(w(:,i), [0;0]+e(1,i), varargin{:}, 'Marker','none','Color',h.Color);
-        plot(w(:,i), [0;0]+e(2,i), varargin{:}, 'Marker','none','Color',h.Color);
+        plot(w(:,i), [0;0]+e(1,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color);
+        plot(w(:,i), [0;0]+e(2,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color);
     end
 end
 
