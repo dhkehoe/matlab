@@ -47,44 +47,30 @@ end
 % Ticks
 if any(strcmp(d,'xtick')) % Using the default (not the same as user passing an empty set)
     p.xtick = get(p.handle,'XTick'); % piggy-back off of MATLAB here
-%     if ~isempty(p.xaxisline), p.xtick = p.xtick( p.xaxisline(1) <= p.xtick & p.xtick <= p.xaxisline(2) ); end
 end
 if any(strcmp(d,'ytick')) % Using the default (not the same as user passing an empty set)
     p.ytick = get(p.handle,'YTick');
-%     if ~isempty(p.yaxisline), p.ytick = p.ytick( p.yaxisline(1) <= p.ytick & p.ytick <= p.yaxisline(2) ); end
 end
-
-% Tick labels
-if any(strcmp(d,'xticklabel')) % Using the default (not the same as user passing an empty set)
-    p.xticklabel = cellstr(num2str(p.xtick(:))); % use tick values as tick labels
-    p.xticklabel = cellfun(@(t)strrep(t,' ',''),p.xticklabel,'UniformOutput',false); % trim white space out of labels
-end
-if any(strcmp(d,'yticklabel'))
-    p.yticklabel = cellstr(num2str(p.ytick(:)));
-    p.yticklabel = cellfun(@(t)strrep(t,' ',''),p.yticklabel,'UniformOutput',false);
-end
-% add these features
-% p.xticklabel = cellfun(@(t)strrep(t,'0.','.'),p.xticklabel,'UniformOutput',false);
-% p.yticklabel = cellfun(@(t)strrep(t,'0.','.'),p.yticklabel,'UniformOutput',false);
 
 % Axis limits
-if isempty(p.xlim), p.xlim = get(p.handle,'XLim'); end
-if isempty(p.ylim), p.ylim = get(p.handle,'YLim'); end
+if isempty(p.xlim)
+    p.xlim = get(p.handle,'XLim');
+end
+if isempty(p.ylim)
+    p.ylim = get(p.handle,'YLim');
+end
 
 % Interpreter
-if ~isempty(p.interpreter), p.xinterpreter = p.interpreter; p.yinterpreter = p.interpreter; end
+if ~isempty(p.interpreter)
+    p.xinterpreter = p.interpreter;
+    p.yinterpreter = p.interpreter;
+end    
 
-% format
-% if 1/10^3 < p.lim(1) || p.lim(2) > 10^3
-%     p.format = '%e';
-% else, p.format = '%d';
-% end    
-
-%% Compute import info for drawing
+%% Compute important info for drawing
 
 % Get figure dimensions
 units = get(gcf,'Units');
-set(gcf,'Units','Normalized'); % Convert to inches
+set(gcf,'Units','Normalized'); % Convert to normalized units
 rect = get(gcf,'OuterPosition');
 set(gcf,'Units',units);
 
@@ -92,7 +78,7 @@ set(gcf,'Units',units);
 set(0,'Units','Pixels'); % Set root object to pixel units
 ss = get(0,'ScreenSize'); % Get screen size
 
-% Size of X axis line
+% Size/coordinates of X axis line
 if isempty(p.xtick)
     xAxisLine = p.xlim;
     if strcmp(p.yaxislocation,'left')
@@ -113,6 +99,8 @@ elseif numel(p.xtick) == 1
         xAxisLine = [min([0,p.xtick]) max([0,p.xtick])];
     end
 else
+    % X ticks were specified
+    p.xtick = p.xtick(p.xlim(1) <= p.xtick & p.xtick <= p.xlim(2)); % Let XLim take precedent
     xAxisLine = [min(p.xtick) max(p.xtick)];
     if strcmp(p.yaxislocation,'left')
         yPos = p.xlim(1);%xAxisLine(1);
@@ -144,6 +132,8 @@ elseif numel(p.ytick) == 1
         yAxisLine = [min([0,p.ytick]) max([0,p.ytick])];
     end
 else
+    % Y ticks were specified
+    p.ytick = p.ytick(p.ylim(1) <= p.ytick & p.ytick <= p.ylim(2)); % Let YLim take precedent
     yAxisLine = [min(p.ytick) max(p.ytick)];
     if strcmp(p.xaxislocation,'bottom')
         xPos = p.ylim(1);%yAxisLine(1);
@@ -155,26 +145,39 @@ else
 end
 
 % Override axis lines
-if ~isempty(p.xaxisline), xAxisLine = p.xaxisline; end
-if ~isempty(p.yaxisline), yAxisLine = p.yaxisline; end
+if ~isempty(p.xaxisline)
+    xAxisLine = p.xaxisline;
+end
+if ~isempty(p.yaxisline)
+    yAxisLine = p.yaxisline;
+end
     
+% Tick labels
+if any(strcmp(d,'xticklabel')) % Using the default (not the same as user passing an empty set)
+    p.xticklabel = cellstr(num2str(p.xtick(:))); % use tick values as tick labels
+    p.xticklabel = cellfun(@(t)strrep(t,' ',''),p.xticklabel,'UniformOutput',false); % trim white space out of labels
+end
+if any(strcmp(d,'yticklabel'))
+    p.yticklabel = cellstr(num2str(p.ytick(:)));
+    p.yticklabel = cellfun(@(t)strrep(t,' ',''),p.yticklabel,'UniformOutput',false);
+end
+
 % Axes object position
 units = get(p.handle,'Units');
 set(p.handle,'Units','normalized');
 axpos = get(p.handle,'Position');
 
 % Ensure ticks are the same length on screen for both axes
-xtickLength = p.ticklength*(  range(xAxisLine)/range(p.xlim))*axpos(3)*rect(3)*ss(3); %   Total pixels of y ticks
-xtickLength =  xtickLength/( (range(yAxisLine)/range(p.ylim))*axpos(4)*rect(4)*ss(4) ); % Total pixels of x ticks 
-xtickLength = xtickLength * range(yAxisLine);
+xtickLength = p.ticklength * (  range(xAxisLine)/range(p.xlim))*axpos(3)*rect(3)*ss(3);   % Total pixels of y ticks
+xtickLength =  xtickLength / ( (range(yAxisLine)/range(p.ylim))*axpos(4)*rect(4)*ss(4) ); % Total pixels of x ticks 
+xtickLength =  xtickLength *    range(yAxisLine);
 
 %% Turn off existing axes
 set(get(p.handle,'XAxis'),'Visible','off');
 set(get(p.handle,'YAxis'),'Visible','off');
 
 %% Ensure we don't disrupt the plot
-set(p.handle,'XLim',p.xlim);
-set(p.handle,'YLim',p.ylim);
+set(p.handle,'XLim',p.xlim,'YLim',p.ylim);
 holdStatus = ishold(p.handle);
 hold(p.handle,'on');
 
@@ -237,7 +240,7 @@ end
 plot([0,0]+yPos,yAxisLine,'Color',p.color,'LineWidth',p.linewidth);
 
 % Keep track of the width of tick labels
-maxLabelWidth = 0; %xAxisLine(1);
+maxLabelWidth = 0;
 
 % Ticks/labels
 for i = 1:numel(p.ytick)
@@ -275,14 +278,16 @@ for i = 1:numel(p.ytick)
 end
 % Draw axis label
 if ~isempty(p.ylabel)
-    text(maxLabelWidth-p.ylabeloffset,.5,...
+    % TO DO, add a resize listener
+    text(maxLabelWidth-p.ylabeloffset,(mean(yAxisLine)-p.ylim(1))/range(p.ylim),...
         p.ylabel,'Units','normalized','Rotation',90,...
-        'HorizontalAlignment','Center', 'VerticalAlignment','Bottom',...
+        'HorizontalAlignment','center', 'VerticalAlignment','middle',...
         'FontSize',p.fontsize,'LineStyle','-','Interpreter',p.yinterpreter);
 end
 
 %% Finish
-set(p.handle,'units',units);
+set(p.handle,'FontSize',p.fontsize);
+set(p.handle,'Units',units);
 if ~holdStatus, hold(p.handle,'off'); end
 
 % Axes object properties:
