@@ -41,7 +41,7 @@ function [ah,lh,x] = barplot(y,e,varargin)
 %               conditional membership within each group. Correspond to
 %               values in the N dimension of 'y'. Legend will not be
 %               plotted if these are not specified.
-%         col - N x 3 matrix of color values to assign to bars within each
+%       color - N x 3 matrix of color values to assign to bars within each
 %               group.
 %   linewidth - Line width to use for plotting error bars.
 %    whisklen - Error bar whisker length to use for plotting error bars.
@@ -70,7 +70,7 @@ end
 p = inputParser;
 addOptional(p,'spacing',.5,@(x) isnumeric(x) && isscalar(x) && x >= 0 ); % Spacing between groups
 addOptional(p,'barwidth',1,@(x) isscalar(x) && isnumeric(x) && x>=0 && x<=1); % Bar width (0 <= bar width <= 1)
-addOptional(p,'col',[],@(x) isnumeric(x) && size(x,1)==size(y,1) && size(x,2)==3 ); % Color matrix (1st Dim = conditions, 2nd Dim = 1x3 color vector)
+addOptional(p,'color',[],@(x) isnumeric(x) && size(x,1)==size(y,1) && size(x,2)==3 ); % Color matrix (1st Dim = conditions, 2nd Dim = 1x3 color vector)
 addOptional(p,'xpad',1,@(x) isnumeric(x) && isscalar(x) && x>=0 && x<=1); % Proportion of 'spacing' to pad around first/last group of bars
 addOptional(p,'whisklen',nan,@(x) isscalar(x) && isnumeric(x) && x>=0 && x<=1); % Error bar whisker length
 addOptional(p,'constr',[],@(x) all(iscell(x)) && length(x)==size(y,2)); % Condition labels (along x-axis)
@@ -91,9 +91,9 @@ x = repmat( size(y,1):size(y,1):size(y,2)*size(y,1) ,[size(y,1) 1])... % Group c
     +repmat(offset,[size(y,1) 1]); % Add between groups displacement
 
 % If no colour is specified, just use maximally distant HSV hue values
-if isempty(p.col)
+if isempty(p.color)
     hvals = linspace(1,1/size(y,1),size(y,1));
-    p.col = hsv2rgb([ hvals', repmat([.75,1], [size(y,1),1]) ]);
+    p.color = hsv2rgb([ hvals', repmat([.75,1], [size(y,1),1]) ]);
 end
 
 % Set the x limits
@@ -110,15 +110,15 @@ hold on;
 
 for i =1:size(x,1)
     % Get plot handles for legend if necessary
-    if ~isempty(p.grpstr), h(i) = bar(0,0,'FaceColor',p.col(i,:)); end
+    if ~isempty(p.grpstr), h(i) = bar(0,0,'FaceColor',p.color(i,:)); end
     for j = 1:size(x,2)
         % Draw bars
         if y(i,j)>0
             rectangle('Position',[x(i,j)-p.barwidth/2, 0, p.barwidth, y(i,j)],...
-                'FaceColor',p.col(i,:),'LineStyle','none'); %[left, bottom, width, height]
+                'FaceColor',p.color(i,:),'LineStyle','none'); %[left, bottom, width, height]
         else
             rectangle('Position',[x(i,j)-p.barwidth/2, y(i,j), p.barwidth, abs(y(i,j))],...
-                'FaceColor',p.col(i,:),'LineStyle','none'); %[left, bottom, width, height]
+                'FaceColor',p.color(i,:),'LineStyle','none'); %[left, bottom, width, height]
         end
         % Put lines around bars, except along x axis
         plot(x(i,j)+[-1,-1,1,1]*p.barwidth/2, [0,1,1,0]*y(i,j),'k-');
