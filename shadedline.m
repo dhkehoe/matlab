@@ -1,5 +1,9 @@
 function h = shadedline(x,y,e,varargin)
 
+x = x(:)';
+y = y(:)';
+% e = e(:);
+
 hold on;
 
 varargin0 = {'k','LineStyle','none','Marker','none'};
