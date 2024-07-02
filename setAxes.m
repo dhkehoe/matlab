@@ -13,6 +13,7 @@ addOptional(p,'interpreter',[],@ischar);
 addOptional(p,'xaxisline',[],@(x)all(isnumeric(x))&&numel(x)==2&&x(1)<=x(2));
 addOptional(p,'xaxislocation','bottom',@(x)any(strcmp(x,{'bottom','top','origin'})));
 addOptional(p,'xlabel',[],@ischar);
+addOptional(p,'xlabeloffset',.025,@(x)isscalar(x)&0<=x);
 addOptional(p,'xlim',[],@(x) all(isnumeric(x))&&numel(x)==2&&x(1)<=x(2));
 addOptional(p,'xticklabel',[],@(x)iscell(x)||isempty(x));
 addOptional(p,'xtick',[],@(x)all(isnumeric(x))&&issorted(x));
@@ -228,7 +229,8 @@ end
 
 % Axis label
 if ~isempty(p.xlabel)
-    text(mean(xAxisLine),maxLabelHeight,...
+%     keyboard
+    text(mean(xAxisLine),maxLabelHeight-range(p.ylim)*p.xlabeloffset,...
             p.xlabel,'Rotation',0,'Interpreter',p.xinterpreter,...
             'HorizontalAlignment','Center', 'VerticalAlignment','Top',...
             'FontSize',p.fontsize,'LineStyle','none');
