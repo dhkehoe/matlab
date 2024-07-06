@@ -37,7 +37,7 @@ PsychError PsychModuleInit(void)
 	
 	// Register the project function which is called when the module
 	// is invoked with no arguments:
-	PsychErrorExitMsg(PsychRegister(NULL, &PsychDisplaySynopsis), "Failed to register the Eyelink synopsis function.");        
+	PsychErrorExitMsg(PsychRegister(NULL, &PsychDisplaySynopsis), "Failed to register the i1dp synopsis function.");        
 	
 	// Register the module name:
 	PsychErrorExitMsg(PsychRegister("i1dp", NULL), "Failed to register i1dp Module name.");
@@ -101,7 +101,7 @@ void InitializeSynopsis()
 
     // Info
     synopsis[i++] = "\n% Get hardware and software info:";
-	synopsis[i++] = "info = Eyelink('GetDeviceInfo')";
+	synopsis[i++] = "info = i1dp('GetDeviceInfo')";
 
     // Get/set
     synopsis[i++] = "\n% Get and set device parameters:";
