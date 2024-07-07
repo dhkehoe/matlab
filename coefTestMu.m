@@ -3,9 +3,15 @@ function [p,F,df,H] = coefTestMu(model,h0)
 % model against some null hypothesis. See fitglm() and fitglme() in the
 % Statistics and Machine Learning toolbox.
 %
-% Returns a 1 by N vector of p-values (from marginal F-tests), where N is
-% the number of cell means in the fitted model. Also returns equally sized
+% Returns a matrix of p-values (from marginal F-tests), where the size is
+% such that the p-values are arranged into a short table, i.e., one
+% dimension for each factor with the length of each dimension equal to the
+% number of levels for the respective factor. Also returns equally sized
 % vectors of F-values and degrees of freedom error for each mu parameter.
+% Also return an N by N coefficient contrast matrix, 'H', where each row
+% corresponds to a cell mean of the design matrix and each column
+% corresponds to a fitted coefficient. Can be used to subsequently test
+% contrasts of individual cell means with coefTest().
 %
 %
 %   DHK - June 12, 2024
