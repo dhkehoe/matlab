@@ -59,7 +59,9 @@ f = f==repmat(min(f,[],2),1,prec);
 
 % Break ties
 for i = find(sum(f,2)>1)
-    f(i, (1:prec)<find(f(i,:),1,'last') ) = 0;
+    w = find(f(i,:),1,'last'); % Pick upper tied score as winner
+    f(i,:) = 0; % Default all scores to zero
+    f(i,w) = 1; % Overwrite the winner
 end
 
 % Return corresponding value on x-domain that minimizes difference
