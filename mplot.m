@@ -7,6 +7,17 @@ function varargout = mplot(Z,varargin)
 
 %% Manage input
 sz = size(Z);
+
+% Allow this for plotting errorbars on the marginals
+if numel(sz)==3
+    sjData = Z;
+    Z = nanmean(Z,3); %#ok
+    sz = size(Z);
+else
+    sjData = [];
+end
+
+% Now ensure that we just have a square matrix
 if any(sz(1:2)==1) || numel(sz) > 2
     error('''Z'' must be an N by M matrix where N and M are of length greater than 1.');
 end
@@ -134,7 +145,7 @@ if size(p.ztick,1)==1
     p.ztick = repmat(p.ztick,2,1);
 end
 if p.equalaxeslim
-    [zl,ztick] = axlim(rangei([mean(Z,1),mean(Z,2)']));
+    [zl,ztick] = axlim(rangei([nanmean(Z,1),nanmean(Z,2)'])); %#ok
     if all(isnan(p.zlim(:)))
         p.zlim = [zl;zl];
     end
@@ -161,7 +172,11 @@ end
 
 %% Marginal X1
 ax(2) = subplot('Position',xpos); hold on;
-plot(p.x, mean(Z,1), p.lineformat{:});
+if isempty(sjData)
+    plot(p.x, mean(Z,1), p.lineformat{:});
+else
+    plotste(p.x, squeeze(nanmean(sjData,1))', p.lineformat{:}); %#ok
+end
 xlabel(p.xlabel);
 ylabel(p.zlabel);
 xlim(p.xlim);
@@ -170,7 +185,27 @@ set(ax(2),'XTick',p.xtick,'XTickLabels',p.xticklabels,'YTick',p.ztick(1,:),'Font
 
 %% Marginal X2
 ax(3) = subplot('Position',ypos); hold on;
-plot(mean(Z,2), p.y, p.lineformat{:});
+if isempty(sjData)
+    plot(mean(Z,2), p.y, p.lineformat{:});
+else 
+    % Marginalize over X1
+    z = squeeze(nanmean(sjData,2))'; %#ok
+
+    % Plot
+    ph = plot(nanmean(z), p.y, p.lineformat{:}); %#ok
+
+    % Compute M +/- SE
+    mse = nanmean(z) + [-1;1].*nanste(z);   %#ok
+
+    % Override the line format options
+    i = find(cellfun(@ischar,p.lineformat));
+    i(contains(lower(p.lineformat(i)),{'color','mode','source','join','annotation'})) = [];
+    p.lineformat(i) = strrep(p.lineformat(i),'o','');
+    p.lineformat = [p.lineformat, 'LineStyle', '-'];
+
+    % Draw
+    for i = 1:numel(p.y), plot(mse(:,i), [0,0]+p.y(i), p.lineformat{:},'Color',ph.Color); end
+end
 xlabel(p.zlabel);
 ylabel(p.ylabel);
 xlim(p.zlim(2,:));
