@@ -61,6 +61,11 @@ function sqz = squeezes(x,varargin)
 %   DHK - June 21, 2024
 
 %% Manage input
+if isempty(x)
+    sqz = [];
+    return;
+end
+
 p = inputParser;
 addOptional(p,'sampRate', .0005, @(x)isnumeric(x)&&isscalar(x));
 addOptional(p,'minDur',   .3,    @(x)isnumeric(x)&&isscalar(x));
@@ -80,7 +85,7 @@ x = x(:)-x(1); % Zero out force
 t = 1:numel(x);
 
 % Compute the time derivative
-dx = reshape( krege(t, [0;diff(x)]/p.sampRate, t, 40), [],1);
+dx = reshape( krege(t, [0;diff(x)]/p.sampRate, t, p.bw), [],1);
 
 % Find sequences where  (derivative > time_thres) OR (force > force_thres)
 % ...AND the signal is above zero (weird edge case...)
