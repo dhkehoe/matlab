@@ -13,7 +13,5 @@ function i = finddim(x,dim,varargin)
 %
 %
 %   dhk - July 17, 2024
-s = size(x);
-i = find(x(:),varargin{:});
-i = sortrows(ind2submat(s,i));
+i = sortrows(ind2submat( size(x), find(x(:),varargin{:}) ));
 i = i(:,dim);
