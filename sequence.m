@@ -12,8 +12,18 @@ if nargin<3, pool=0; % Default to no pooling
 elseif ~isnumeric(pool) || ~isscalar(pool); error('Argument ''pool'' must be a numeric scalar.');
 end
 
-% Get all the sequences from recursive subroutine
-seqs = sequence_(x(:),1,0,len);
+% Try getting all the sequences from the recursive subroutine
+try
+    seqs = sequence_r(x(:),1,0,len);
+catch ex
+    if contains(ex.identifier,'StackOverflow')
+        % Recursion limit exceeded; use iterative method
+        seqs = sequence_i(x(:),len);
+    else
+        % Some other error
+        rethrow(ex);
+    end
+end
 
 % sequence_() returns a 0x3 if there's no sequences. Change this to []
 if isempty(seqs)
@@ -34,9 +44,16 @@ while pool && i<size(seqs,1)
 end
 
 
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Subroutines
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function seqs = sequence_(x,i,n,len)
-% 'n' is the number of sequences.
+
+function seqs = sequence_r(x,i,n,len)
+% Recursive routine
+%     x - the logical vector to search through.
+%     i - the current index.
+%     n - the number of sequences.
+%   len - minimum sequence length.
 
 % First iterate through Boolean array 'x'
 seq = 0; % Current sequence length
@@ -51,7 +68,7 @@ for k = i:length(x)
         if k==length(x) % Last element
             seqs = nan(n,3); % Create output structure
         else
-            seqs = sequence_(x,k+1,n,len); % Elements in 'x' left to search; step back in
+            seqs = sequence_r(x,k+1,n,len); % Elements in 'x' left to search; step back in
         end
         if n % If there are any sequences
             adj = seq >= len && k==length(x); % True IF: we're at the end of 'x' and this 'k' is part of the sequence
@@ -60,3 +77,30 @@ for k = i:length(x)
         return;
     end
 end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function seqs = sequence_i(x,len)
+% Iterative routine
+%     x - the logical vector to search through.
+%   len - minimum sequence length.
+n = 0; % Number of sequences
+seq = 0; % Current sequence length
+seqs = zeros(numel(x),3); % Excessive preallocation
+for i = 1:numel(x)
+    if x(i)
+        if ~seq % New sequence
+            n = n+1; % Increment
+        end
+        seq = seq+1; % Count sequence length
+    elseif seq % End of running sequence
+        if seq<len
+            % Invalid sequence
+            n = n-1; % Decrement
+        else
+            % Valid sequence; get start/end elements and range
+            seqs(n,:) = [i-0-seq,i-1,seq];
+        end
+        seq = 0; % Reset counter
+    end
+end
+seqs(n+1:end,:) = []; % Discard non-sequences
