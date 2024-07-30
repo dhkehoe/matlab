@@ -1,4 +1,4 @@
-function h = shadedline(x,y,e,varargin)
+function varargout = shadedline(x,y,e,varargin)
 
 x = x(:)';
 y = y(:)';
@@ -22,7 +22,6 @@ while i < numel(varargin)
 
         i=i+1;
         ex = ex+2;
-%         keyboard
     end
 
     i=i+1;
@@ -45,4 +44,8 @@ if size(e,1)==1
     fill([x,fliplr(x)],[y-e,fliplr(y+e)],varargin0{:});
 else
     fill([x,fliplr(x)],[e(1,:),fliplr(e(2,:))],varargin0{:});
+end
+
+if nargout
+    varargout{1} = h;
 end
