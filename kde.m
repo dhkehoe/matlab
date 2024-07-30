@@ -8,14 +8,14 @@ function [x,y,e] = kde(d,varargin)
 %% Set up
 d = reshape( d(~(isnan(d)|isinf(d))) ,[],1); % Throw out trash data
 p = inputParser;
-addOptional(p,'bw',[],@(x)isnumeric(x)&&numel(x)==1), % Kernel bandwith
-addOptional(p,'scale',[],@(x)isnumeric(x)&&numel(x)==1), % Spatial scale
+addOptional(p,'bw',[],@(x)isnumeric(x)&&isscalar(x)), % Kernel bandwith
+addOptional(p,'scale',[],@(x)isnumeric(x)&&isscalar(x)), % Spatial scale
 addOptional(p,'xl',[],@(x)isnumeric(x)&&numel(x)==2), % Smoothing x boundaries [lower,upper]
 addOptional(p,'domain',[],@(x)isnumeric(x)&&numel(size(x))==2&&any(size(x)==1)); % user provides actual x domain
-addOptional(p,'kernel','gauss',@(x)all(ischar(x))), % Kernel
-addOptional(p,'norm','prob',@(x)all(ischar(x))), % Normalization type (probability or count)
-addOptional(p,'dist','pdf',@(x)all(ischar(x))), % Distribution type (PDF or CDF)
-addOptional(p,'bounded',[0 0],@(x)islogical(logical(x))&&numel(x)==2), % Kernel bandwith
+addOptional(p,'kernel','gauss',@ischar), % Kernel
+addOptional(p,'norm','prob',@ischar), % Normalization type (probability or count)
+addOptional(p,'dist','pdf',@ischar), % Distribution type (PDF or CDF)
+addOptional(p,'bounded',[0,0],@(x)islogical(logical(x))&&numel(x)==2), % Kernel bandwith
 parse(p,varargin{:});
 p = p.Results;
 
