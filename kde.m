@@ -1,4 +1,4 @@
-function [x,y,e] = kde(d,varargin)
+function varargout = kde(d,varargin)
 % I haven't had time to properly document this function yet. And it could
 % use a little bit of refining (e.g., more kernels, better default
 % bandwidths, etc.)
@@ -81,7 +81,7 @@ x = p.domain;
 %% Compute KDE
 % Repeat data across kernels and take mean (mean gives pdf, while sum gives histogram)
 [md,mx] = meshgrid(x,d);
-y = sum(k(mx,md)); % count
+y = sum(k(mx,md),1); % count
 if norm == 1, y = y./numel(d); end % density
 
 % If necessary, compute CDF
@@ -92,8 +92,21 @@ if dist == 2, y = cumsum(y);
 end
 
 %% Set outputs
-if nargout==3, e = std(k(mx,md)); end % compute error
-if nargout==1, x = y; end % if single argument returned, return KDE; this assumes user has domain already
+if nargout<=1
+    % if single argument returned, return KDE; this assumes user has domain already
+    varargout{1} = y;
+end 
+if 1<nargout
+    % 2 or more arguments returned, return (x,y)
+    varargout{1} = x;
+    varargout{2} = y;
+end
+if nargout==3
+    % compute error
+    varargout{3} = std(k(mx,md));
+end 
+
+
 
 
 function y = iqr(x)
