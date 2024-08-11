@@ -12,5 +12,7 @@ function y = runs(x)
 %   DHK - July 26th, 2024
 y = ~diff(x(:));
 s = sequence(y,1);
-s = s(:,3);
+if numel(s)
+    s = s(:,3);
+end
 y = [zeros(sum(~y)-numel(s),1); sort(s)];
