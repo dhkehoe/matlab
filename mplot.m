@@ -145,7 +145,11 @@ if size(p.ztick,1)==1
     p.ztick = repmat(p.ztick,2,1);
 end
 if p.equalaxeslim
-    [zl,ztick] = axlim(rangei([nanmean(Z,1),nanmean(Z,2)'])); %#ok
+    if isempty(sjData)
+        [zl,ztick] = axlim(rangei([nanmean(Z,1),nanmean(Z,2)'])); %#ok
+    else
+        [zl,ztick] = axlim(rangei(nanmean(shiftdim(sjData,2))+[-1;1].*nanste(shiftdim(sjData,2)),[],'all')); %#ok
+    end
     if all(isnan(p.zlim(:)))
         p.zlim = [zl;zl];
     end
