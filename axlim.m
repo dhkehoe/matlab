@@ -3,24 +3,27 @@ function [lim, tix, lab] = axlim(mm,units,pad)
 if any(isnan(mm) | isinf(mm))
     error('''m'' must not contain NaN or Inf values.');
 end
-if nargin<3
+if nargin<3 || isempty(pad)
     pad = .05;
 end
-if nargin<2
+if nargin<2  || isempty(units)
     % Ticks should be a factor of these numbers
     nice = [1,2,5,10];
 
+    % Ideal number of ticks
+    ntix = 4:8;
+
     % Units if we use 4-10 ticks
-    units = range(mm)./(4:10)';
+    units = range(mm)./ntix';
 
     % Rescale to approximately between (1,10)
     scale = units./10.^floor(log10(units));
 
     % Best "nice" unit with resepect to the rescaled units
-    cmp = abs(repmat(scale,1,numel(nice)) - repmat(nice,7,1));
+    cmp = abs(repmat(scale,1,numel(nice)) - repmat(nice,numel(ntix),1));
 
     % Find minimum
-    [i,j] = ind2sub([7,numel(nice)],find(cmp(:)==min(cmp(:)),1,'first'));
+    [i,j] = ind2sub([numel(ntix),numel(nice)],find(cmp(:)==min(cmp(:)),1,'first'));
 
     % Back into original units
     units = nice(j)*10^floor(log10(units(i)));
