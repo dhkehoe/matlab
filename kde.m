@@ -100,11 +100,9 @@ if 1<nargout
     % 2 or more arguments returned, return (x,y)
     varargout{1} = x;
     varargout{2} = y;
+    varargout{3} = std(k(mx,md)); % compute error
 end
-if nargout==3
-    % compute error
-    varargout{3} = std(k(mx,md));
-end 
+
 
 
 

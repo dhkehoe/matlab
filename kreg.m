@@ -10,8 +10,8 @@ function varargout = kreg(x,y,varargin)
 %
 % USAGE
 %   yfit = kreg(x,y);
-%   [yfit, xfit] = kreg(x,y);
-%   [yfit, xfit, efit] = kreg(x,y);
+%   [xfit, yfit] = kreg(x,y);
+%   [xfit, yfit, efit] = kreg(x,y);
 %   yfit = kreg(x,y,'OptionalArgName1',OptionalArgValue1,...);
 %
 % EXAMPLES
@@ -166,21 +166,18 @@ yfit(f==0) = 0; % protect against divide by zero nans
 if 1<nargout
     varargout{1} = xfit;
     varargout{2} = yfit;
-else
-    varargout{1} = yfit;
-end
-if 3<nargout
     efit = sqrt( sum( (y-repmat(yfit,size(y,1),1)).^2 ) ) ./f;
     efit(f==0) = 0;
     varargout{3} = efit;
-end
-if nargout==4
     varargout{4} = f;
+else
+    varargout{1} = yfit;
 end
 
 
 
 
+%%
 function y = iqr(x)
 y = diff(prctile(x, [25, 75]));
 
