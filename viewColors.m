@@ -1,16 +1,26 @@
-function viewColors(cols,order)
-% Draw an assortment of colors onto a color wheel.
+function viewColors(cols,radius,order)
+% Draw an assortment of colors onto a color wheel (annulus).
 %
-% 'cols'  - Must be an N x 3 matrix of N colors that are RGB encoded along
-%           the columns. It can be in either double or uint8 format, where
-%           doubles are on the interval (0,1) and uint8 are on the interval
-%           (0,255).
-% 'order' - Indicates whether to order the colors according to the color
-%           wheel. By default, we will order them to ensure it doesn't look
-%           like trash when we draw them.
+%  cols  - Must be an N x 3 matrix of N colors that are RGB encoded along
+%          the columns. It can be in either double or uint8 format, where
+%          doubles are on the interval (0,1) and uint8 are on the interval
+%          (0,255).
+% radius - The inner radius of the color wheel on the interval (0,1). A
+%          value of 0 makes a circle. A value of 1 makes a ring. Default is
+%          .5.
+%  order - Indicates whether to order the colors according to the color
+%          wheel. By default, we will order them to ensure it doesn't look
+%          like trash when we draw them.
 
 %% Check inputs
-if nargin<2, order=1; end
+if nargin<3 || isempty(order)
+    order = 1;
+end
+if nargin<2 || isempty(radius)
+    radius = .5;
+elseif radius < 0 || 1 < radius
+    error('Optional argument ''radius'' must be in the interval (0,1).');
+end
 
 if size(cols,2)~=3
     error('Incorrect format: input must contain an (N by 3) matrix of (N) RGB values.');
@@ -34,19 +44,10 @@ end
 hold on;
 for i = 1:n
     t = linspace( (i-1)/n, i/n, 100 )*2*pi;
-%     fill([cos(t),0],[sin(t),0],'k','FaceColor',cols(i,:),'EdgeColor','none'); % full circle
-    fill( [cos(t),fliplr(cos(t)/2)],[sin(t),fliplr(sin(t)/2)],'k','FaceColor',cols(i,:),'EdgeColor','none'); % hemi-circle
+    fill( [cos(t),fliplr(cos(t)*radius)],[sin(t),fliplr(sin(t)*radius)],'k','FaceColor',cols(i,:),'EdgeColor','none'); % hemi-circle
 end
 daspect([1,1,1]); 
 axis off;
 
 % Color wheel
-% m = .9;
-% n = 500;
-% t = linspace(1/n,1,n)';
-% l = (cos(t*6*pi)/2+.5)*(1-m)+m;
-% l = min( 1-(1-m)*exp( -(repmat(t,1,3)-(1:2:5)/6).^2 / .0001 ) ,[],2);
-% cols = hsv2rgb( [t,ones(n,1),l] );
-% viewColors(cols);
-
-% n=500; t=linspace(1/n,1,n)*360; cols=pickColorsFromOrientations(t,85); viewColors(cols);
+% >>viewColors(pickColors(100));
