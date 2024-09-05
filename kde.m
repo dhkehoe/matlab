@@ -10,6 +10,7 @@ d = reshape( d(~(isnan(d)|isinf(d))) ,[],1); % Throw out trash data
 p = inputParser;
 addOptional(p,'bw',[],@(x)isnumeric(x)&&isscalar(x)), % Kernel bandwith
 addOptional(p,'scale',[],@(x)isnumeric(x)&&isscalar(x)), % Spatial scale
+addOptional(p,'npoints',101,@(x)isnumeric(x)&&isscalar(x)), % Spatial scale
 addOptional(p,'xl',[],@(x)isnumeric(x)&&numel(x)==2), % Smoothing x boundaries [lower,upper]
 addOptional(p,'domain',[],@(x)isnumeric(x)&&numel(size(x))==2&&any(size(x)==1)); % user provides actual x domain
 addOptional(p,'kernel','gauss',@ischar), % Kernel
@@ -70,11 +71,17 @@ end
 
 %% Define domain of x
 if isempty(p.domain) % domain not provided
-    if isempty(p.xl), p.xl = [min(d),max(d)]+[-1,1]*p.bw*2; end
-    if isempty(p.scale), p.scale = range(p.xl)/100; end
-    p.domain = p.xl(1) : p.scale : p.xl(2); % Define domain of x
-elseif ~isempty(p.scale) || ~isempty(p.xl) % domain provided -> ~isempty(p.x) == true
-    warning(' ''domain'' was provided, so ''scale'' and ''xl'' are being ignored.');
+    if isempty(p.xl)
+        p.xl = [min(d),max(d)]+[-1,1]*p.bw*2;
+    end
+    if ~isempty(p.scale)
+        p.domain = p.xl(1) : p.scale : p.xl(2); % Define domain of x
+    else
+        p.domain = linspace(p.xl(1),p.xl(2),p.npoints);
+    end
+    
+elseif ~isempty(p.scale) || ~isempty(p.xl) || ~isempty(p.npoints) % domain provided -> ~isempty(p.x) == true
+    warning(' ''domain'' was provided, so ''scale'', ''npoints'', and ''xl'' are being ignored.');
 end
 x = p.domain;
 
