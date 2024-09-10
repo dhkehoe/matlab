@@ -80,7 +80,7 @@ if isempty(p.domain) % domain not provided
         p.domain = linspace(p.xl(1),p.xl(2),p.npoints);
     end
     
-elseif ~isempty(p.scale) || ~isempty(p.xl) || ~isempty(p.npoints) % domain provided -> ~isempty(p.x) == true
+elseif ~isempty(p.scale) || ~isempty(p.xl) % domain provided -> ~isempty(p.x) == true
     warning(' ''domain'' was provided, so ''scale'', ''npoints'', and ''xl'' are being ignored.');
 end
 x = p.domain;
