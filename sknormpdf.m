@@ -4,4 +4,9 @@ function y = sknormpdf(x,mu,sigma,alpha)
 % Make it behave like a skewed standard normal if only 2 arguments are
 % given.
 if nargin==2, alpha = mu; mu = 0; sigma = 1; end
-y = 2/sigma .* normpdf((x-mu)./sigma) .* normcdf((x-mu)./sigma.*alpha);
+
+% Standardize x
+x = (x-mu)./sigma;
+
+% Compute function
+y = 2/sigma .* normpdf(x) .* normcdf(x.*alpha);
