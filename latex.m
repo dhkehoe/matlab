@@ -51,7 +51,7 @@ function varargout = latex(value)
 
 % Get a list of all the graphics root (alias "groot") object properties
 p = fieldnames(get(groot,'factory'));
-p = p(contains(p,'Interpreter'));
+p = strrep(p(contains(p,'Interpreter')),'factory','Default');
 
 % A return value indicates that this is a query
 if nargout
@@ -76,5 +76,5 @@ end
 
 % Set all text interpreters to latex (true) or tex (false)
 opt = {'tex','latex'}; % Interpreter options
-arg = reshape([strrep(p,'factory','Default'),repmat(opt(value),size(p))]',[],1);
+arg = reshape([p,repmat(opt(value),size(p))]',[],1);
 set(groot,arg{:});
