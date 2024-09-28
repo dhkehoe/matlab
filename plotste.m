@@ -1,4 +1,4 @@
-function h = plotste(x,y,varargin)
+function varargout = plotste(x,y,varargin)
 % 
 %
 % USAGE
@@ -16,6 +16,8 @@ function h = plotste(x,y,varargin)
 %            line - 
 %            type - 
 %         weights - 
+%       ignoreinf -
+%           polar -
 %
 % OUTPUT
 %   h - 
@@ -53,6 +55,8 @@ end
 [varargin, type] = inputChecker(varargin,'type',    'cont', @(x)ischar(x)&&any(contains(lower(x),{'cont','prop'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
 [varargin, n   ] = inputChecker(varargin,'weights',     [], @(x)isnumeric(x)&&all(size(x)==size(y)),               'Optional argument ''Weights'' must be a matrix with the same shape as ''y''.');
 [varargin, ign ] = inputChecker(varargin,'ignoreinf',    0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''IgnoreInf'' must be a logical scalar.');
+[varargin, pol ] = inputChecker(varargin,'polar',        0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''Polar'' must be a logical scalar.');
+[varargin, plab] = inputChecker(varargin,'polarlabels', [], @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''PolarLabels'' must be a numeric scalar.');
 
 % Convert 'type' to an integer
 type = find(strcmpi(type,{'cont','prop'})); 
@@ -109,19 +113,79 @@ end
 
 %% Plot
 
-% Draw means
-if lin
-    h = plot(x, m, varargin{:});
-else
-    h = [];
-end
+if pol  % Polar plot
 
-% Draw error bars
-for i = 1:size(y,2)
-    plot([0;0]+x(i), e(:,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color); % Override the marker property, ensure color matches
-    if wl
-        plot(w(:,i), [0;0]+e(1,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color);
-        plot(w(:,i), [0;0]+e(2,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color);
+    % Compute the y-scaling
+    [zl, tix, lab] = axlim(rangei(e,[],'all'));
+    % units = tix(2)-tix(1);
+
+    % Draw the scaling circles
+    ntix = numel(tix);
+    t = 0:.01:2.01*pi;
+    for i = 1:ntix
+        plot(cos(t)*i/ntix,sin(t)*i/ntix,'k--');
+    end
+
+    % set scale
+    xyl = [-1,1];
+    xlim(xyl);
+    ylim(xyl);   
+
+    % draw the quadrants
+    plot(xyl,[0,0],'k--');
+    plot([0,0],xyl,'k--');
+
+    % draw the means (line?)
+    if xflag
+        x = x./numel(x)*2*pi;
+    end
+    m = (m-zl(1))/range(zl);
+    h = plot(cos(x).*m, sin(x).*m, varargin{:}, 'LineStyle', 'none');
+
+    % draw the error bars
+    e = (e-zl(1))/range(zl);
+    for i = 1:size(y,2)
+        plot(cos(x(i)).*e(:,i), sin(x(i)).*e(:,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color); % Override the marker property, ensure color matches
+        if wl
+            plot(cos(x(i)+pi/2)*wl*[-1,1]+cos(x(i))*e(1,i), sin(x(i)+pi/2)*wl*[-1,1]+sin(x(i))*e(1,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color);
+            plot(cos(x(i)+pi/2)*wl*[-1,1]+cos(x(i))*e(2,i), sin(x(i)+pi/2)*wl*[-1,1]+sin(x(i))*e(2,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color);
+        end
+    end
+
+    % set scale labels
+    if isempty(plab)
+        x = sort(abs(mod(x,pi*2)));
+        ad = abs(diff(x(:)));
+        i = find(ad==max(ad));
+        if isscalar(i)
+            plab = atan2(mean(sin(x(i+[0,1]))),mean(cos(x(i+[0,1]))));
+        else
+            plab = pi/4;
+        end       
+    end
+    for i = 1:ntix
+        text(cos(plab)*i/ntix,sin(plab)*i/ntix,lab{i},...
+            'HorizontalAlignment','center','VerticalAlignment','middle');
+    end
+    % set(gca,'XTick',[],'YTick',[]);
+    axis off;
+    
+else % Linear plot   
+
+    % Draw means
+    if lin
+        h = plot(x, m, varargin{:});
+    else
+        h = [];
+    end
+
+    % Draw error bars
+    for i = 1:size(y,2)
+        plot([0;0]+x(i), e(:,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color); % Override the marker property, ensure color matches
+        if wl
+            plot(w(:,i), [0;0]+e(1,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color);
+            plot(w(:,i), [0;0]+e(2,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color);
+        end
     end
 end
 
@@ -130,27 +194,7 @@ if ~ish
     hold off;
 end
 
-%% Utilities
-function [varg, val] = inputChecker(varg,vstr,dval,efun,estr)
-% This function works quite similar to addOptional(). It takes a varargin
-% argument 'varg' and the name of an optional argument specified as a
-% string 'vstr'. It searches varargin for the optional argument and returns
-% the value for this optional argument upon exiting the function. The value
-% is assumed to be the subsequent element of varargin after the specifer.
-% The specifier and subsequent value from varargin are trimmed and this
-% trimmed varargin is returned upon exiting. Additionally, the value is
-% defaulted to 'dval' and subjected to an integrity check 'efun'. 'efun' is
-% a handle to an inline function that returns true when the value is
-% acceptable. If the value is not acceptable according to 'efun', an error
-% is throw. The error string is 'estr'.
-val = dval;
-for i = 1:numel(varg)
-    if i<numel(varg) && ischar(varg{i}) && strcmpi(varg{i},vstr)
-        val = varg{i+1};
-        if ~efun(val)
-            error(estr);
-        end
-        varg(i:i+1) = [];
-        break;
-    end
+%% Set return args
+if nargout
+    varargout{1} = h;
 end
