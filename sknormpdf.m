@@ -9,4 +9,4 @@ if nargin==2, alpha = mu; mu = 0; sigma = 1; end
 x = (x-mu)./sigma;
 
 % Compute function
-y = 2/sigma .* normpdf(x) .* normcdf(x.*alpha);
+y = 2./sigma .* normpdf(x) .* normcdf(x.*alpha);
