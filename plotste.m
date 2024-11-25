@@ -176,7 +176,7 @@ else % Linear plot
     if lin
         h = plot(x, m, varargin{:});
     else
-        h = [];
+        h.Color = 'k';
     end
 
     % Draw error bars
