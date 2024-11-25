@@ -42,9 +42,9 @@ y = atan2d(xy(:,2)*p.screenSize(2)/p.screenResolution(2),p.screenDistance);
 
 %% Return {x,y} or [x,y] ?
 switch nargout
-    case 1
-        varargout{1} = [x(:),y(:)];
     case 2
         varargout{1} = x;
         varargout{2} = y;
+    otherwise
+        varargout{1} = [x(:),y(:)];
 end
