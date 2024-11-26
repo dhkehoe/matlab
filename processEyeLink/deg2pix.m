@@ -1,4 +1,4 @@
-function varargout = pix2deg(xy,varargin)
+function varargout = deg2pix(xy,varargin)
 %
 %
 % OPTIONAL INPUT
@@ -43,9 +43,9 @@ end
 
 %% Return {x,y} or [x,y] ?
 switch nargout
-    case 1
-        varargout{1} = [x(:),y(:)];
     case 2
         varargout{1} = x;
         varargout{2} = y;
+    otherwise
+        varargout{1} = [x(:),y(:)];
 end
