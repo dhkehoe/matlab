@@ -44,9 +44,17 @@ elseif numel(x) ~= ngrp % 'x' was passed, but contains the wrong number of eleme
 end
 
 % Optional name-pair arguments that cannot be passed to fill()
-[varargin, width] = inputChecker(varargin,'width',.8, @(x)isnumeric(x)&&isscalar(x), 'Optional argument ''Width'' must be a numeric scalar.');
-[varargin,    bw] = inputChecker(varargin,'bandwidth',[], @(x)isnumeric(x)&&isscalar(x), 'Optional argument ''bandwidth'' must be a numeric scalar.');
-[varargin,  prec] = inputChecker(varargin,'precision',101, @(x)isnumeric(x)&&isscalar(x), 'Optional argument ''Precision'' must be a numeric scalar.');
+sideStr = {'both','right','left'};
+try
+    [varargin, width] = inputChecker(varargin,'width',.8, @(x)isnumeric(x)&&isscalar(x), 'Optional argument ''Width'' must be a numeric scalar.');
+    [varargin,    bw] = inputChecker(varargin,'bandwidth',[], @(x)isnumeric(x)&&isscalar(x), 'Optional argument ''Bandwidth'' must be a numeric scalar.');
+    [varargin,  prec] = inputChecker(varargin,'precision',101, @(x)isnumeric(x)&&isscalar(x), 'Optional argument ''Precision'' must be a numeric scalar.');
+    [varargin,  side] = inputChecker(varargin,'side','both', @(x)ischar(x)&&any(strcmpi(x,sideStr)), 'Optional argument ''Side'' must be one of the following strings: ''both'', ''right'', or ''left''.');
+catch err
+    % Trim inputChecker from the call stack in the error report
+    error(struct('identifier',err.identifier,'message',err.message,'stack',err.stack(end)));
+end
+side = find(strcmpi(sideStr,side));
 
 % Adjust the colors according to the number of conditions
 [varargin, col] = inputChecker(varargin,'facecolor',[],@(x)true,'');
@@ -103,7 +111,14 @@ hold on;
 % Draw
 for i = 1:ngrp
     for j = 1:ncon
-        fill([fy{i,j},-fliplr(fy{i,j})]/mmax*width+x(i),[fx{i,j},fliplr(fx{i,j})],'k','FaceColor',col{j},varargin{:});
+        switch side
+            case 1 % both
+                fill( [fy{i,j},-fliplr(fy{i,j})]/mmax*width+x(i),[fx{i,j},fliplr(fx{i,j})],'k','FaceColor',col{j},varargin{:});
+            case 2 % right
+                fill( [fy{i,j},fy{i,j}(1)]/mmax*width+x(i),[fx{i,j},fx{i,j}(1)],'k','FaceColor',col{j},varargin{:});
+            case 3 % left
+                fill(-[fy{i,j},fy{i,j}(1)]/mmax*width+x(i),[fx{i,j},fx{i,j}(1)],'k','FaceColor',col{j},varargin{:});
+        end
     end
 end
 
