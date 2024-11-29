@@ -50,13 +50,17 @@ else % Ensure x is a row vector
 end
 
 % Retrive optional arguments that cannot be passed to plot()
-[varargin, wl  ] = inputChecker(varargin,'whiskerlength',0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''WhiskerLength'' must be a numeric scalar.');
-[varargin, lin ] = inputChecker(varargin,'line',         1, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''Line'' must be a numeric scalar.');
-[varargin, type] = inputChecker(varargin,'type',    'cont', @(x)ischar(x)&&any(contains(lower(x),{'cont','prop'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
-[varargin, n   ] = inputChecker(varargin,'weights',     [], @(x)isnumeric(x)&&all(size(x)==size(y)),               'Optional argument ''Weights'' must be a matrix with the same shape as ''y''.');
-[varargin, ign ] = inputChecker(varargin,'ignoreinf',    0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''IgnoreInf'' must be a logical scalar.');
-[varargin, pol ] = inputChecker(varargin,'polar',        0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''Polar'' must be a logical scalar.');
-[varargin, plab] = inputChecker(varargin,'polarlabels', [], @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''PolarLabels'' must be a numeric scalar.');
+try
+    [varargin, wl  ] = inputChecker(varargin,'whiskerlength',0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''WhiskerLength'' must be a numeric scalar.');
+    [varargin, lin ] = inputChecker(varargin,'line',         1, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''Line'' must be a numeric scalar.');
+    [varargin, type] = inputChecker(varargin,'type',    'cont', @(x)ischar(x)&&any(contains(lower(x),{'cont','prop'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
+    [varargin, n   ] = inputChecker(varargin,'weights',     [], @(x)isnumeric(x)&&all(size(x)==size(y)),               'Optional argument ''Weights'' must be a matrix with the same shape as ''y''.');
+    [varargin, ign ] = inputChecker(varargin,'ignoreinf',    0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''IgnoreInf'' must be a logical scalar.');
+    [varargin, pol ] = inputChecker(varargin,'polar',        0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''Polar'' must be a logical scalar.');
+    [varargin, plab] = inputChecker(varargin,'polarlabels', [], @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''PolarLabels'' must be a numeric scalar.');
+catch err
+    error(struct('identifier',err.identifier,'message',err.message,'stack',err.stack(end)));
+end
 
 % Convert 'type' to an integer
 type = find(strcmpi(type,{'cont','prop'})); 
