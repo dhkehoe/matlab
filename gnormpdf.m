@@ -1,3 +1,3 @@
 function y = gnormpdf(x,mu,sigma,beta)
-if beta<0, error('''beta'' must be positive'); end
+% Probability density function of a generalized normal random variable.
 y = beta./(2*sigma*gamma(1/beta)) .* exp( -(abs(x-mu)./sigma).^beta );
