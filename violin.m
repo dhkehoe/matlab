@@ -89,6 +89,8 @@ mmax = 0;
 for i = 1:ngrp
     for j = 1:ncon
         [fx{i,j},fy{i,j}] = kde(y{i,j},kdearg{:});
+        fx{i,j} = [fx{i,j}(1), fx{i,j}, fx{i,j}(end)];
+        fy{i,j} = [         0, fy{i,j},            0];
         t = max(fy{i,j});
         if mmax < t
             mmax = t;
