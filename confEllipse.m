@@ -43,18 +43,36 @@ function [ex,ey,varargout] = confEllipse(x,y,varargin)
 %
 %   DHK - Jan.19, 2022
 
-%% manage input
-ip = inputParser; % parse optional arguments
-addOptional(ip,'ci',.95,@(x)numel(x)==1&&isnumeric(x)); % confidence level of ellipse
-addOptional(ip,'npoints',100,@(x)numel(x)==1&&isnumeric(x)); % number of points to draw ellipse with
+%% Manage input
+if numel(x)~=numel(y)
+    error('Mismatched number of elements between ''x'' and ''y'' inputs.');
+end
+
+% Parse optional arguments
+ip = inputParser;
+addOptional(ip,'ci',.95,@(x)isscalar(x)&&isnumeric(x)); % confidence level of ellipse
+addOptional(ip,'npoints',100,@(x)isscalar(x)&&isnumeric(x)); % number of points to draw ellipse with
 parse(ip,varargin{:});
 ip = ip.Results;
-if 0>=ip.ci || ip.ci>=1, error('bad confidence level. ''ci'' must be in the interval 0<ci<1 '), end
-if ip.npoints < 3, error('bad number of points. ''npoints'' must be greater than 3 '), end
-x = x(:); % vectorize data
+
+% Check confidence level
+if ip.ci<=0 || 1<=ip.ci
+    error('Bad confidence level. Optional argument ''ci'' must be in the interval (0 < ci < 1) .');
+end
+% Check number of points
+if ip.npoints < 3
+    error('Bad number of points. ''npoints'' must be greater than 2.');
+end
+
+% Clean data
+x = x(:);
 y = y(:);
-x(isnan(x)) = [];
-y(isnan(y)) = [];
+v = isnan(x) | isinf(x) | isnan(y) | isinf(y);
+x(v) = [];
+y(v) = [];
+if sum(~v) < 2
+    error('Insufficient valid data. Fewer than 2 points after trimming NaN and Inf values.');
+end
 
 %% compute ellipse
 [evc,evl] = eig(cov(x,y)); % run PCA
