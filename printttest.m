@@ -8,11 +8,15 @@ if ischar(x2)
 end
 
 p = inputParser;
-addOptional(p,'print',  true,@isscalar);
+addOptional(p,'print',     [],@isscalar);
 addOptional(p,'samples',   [],@isscalar);
 addOptional(p,'args', {'tail','both'},@iscell);
 parse(p,varargin{:});
 p = p.Results;
+
+if isempty(p.print)
+    p.print = ~nargout;
+end
 
 if isempty(p.samples)
     if isempty(x2)
@@ -27,9 +31,9 @@ switch p.samples
     case 1
         tfun = @ttest;
         if isempty(x2)
-            md = mean(x1);
+            md = nanmean(x1); %#ok
         elseif eqsize(x1,x2)
-            md = mean(x1-x2);
+            md = nanmean(x1-x2); %#ok
         else
             error('The data in a dependent (paired) t-test must be the same size.');
         end
@@ -38,7 +42,7 @@ switch p.samples
             error('The data in an independent t-test must contain 2 samples.');
         end
         tfun = @ttest2;
-        md = mean(x1)-mean(x2);
+        md = nanmean(x1)-nanmean(x2); %#ok
     otherwise
         error('Optional argument ''samples'' must be either 1 (dependent) or 2 (independent).');
 end
