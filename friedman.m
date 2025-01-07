@@ -1,4 +1,5 @@
-function [p,tbl,stats] = friedman(x,reps,displayopt)
+function [h,p,stats] = friedman(x,reps,displayopt)
+x = squeeze(x);
 x(any(isnan(x),2),:) = [];
 
 if numel(size(x))~=2, error('''x'' must be a 2D matrix where rows indicate subjects and columns indicate conditions'); end
@@ -12,3 +13,4 @@ stats.df = k-1;
 stats.p = 1-chi2cdf(stats.chi2,stats.df);
 
 p = stats.p;
+h = p<.05;
