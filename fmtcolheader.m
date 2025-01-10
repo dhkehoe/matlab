@@ -1,8 +1,8 @@
 function h = fmtcolheader(header)
-% Outputs a struct to easily access variables in a column-labelled table.
-% Convert a cell vector of strings into a struct containing identical field
-% names, where each fieldname is a logical index to the corresponding
-% column.
+% Outputs a struct to easily access variables in a column-labelled 2D 
+% matrix. Convert a cell vector of strings into a struct containing field
+% names identical to the strings in 'header'. Each fieldname is a logical
+% index to the corresponding column.
 %
 % USAGE
 %   h = fmtColHeader(header);
@@ -25,7 +25,7 @@ function h = fmtcolheader(header)
 %   DHK - Oct. 21, 2023
 
 %% Process
-if ~iscell(header) || ~isvector(header) || ~all(cellfun(@ischar,header))
+if ~( iscell(header) && isvector(header) && all(cellfun(@ischar,header)) )
     error('Input must be a 1D array of strings.');
 end
 
