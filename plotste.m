@@ -3,27 +3,32 @@ function varargout = plotste(x,y,varargin)
 %
 % USAGE
 %   h = plotste(y);
-%   h = plotste(x, y);
+%   h = plotste(x,y);
 %   h = plotste(y, 'OptionalArgName',optionalArgValue, ...);
-%   h = plotste(x, y, 'OptionalArgName',optionalArgValue, ...);
+%   h = plotste(x,y, 'OptionalArgName',optionalArgValue, ...);
 %
 % INPUT
 %   y - 
 %
 % OPTIONAL INPUT
-%               x -
-%   whiskerlength -
+%               x - 
+%   whiskerlength - 
 %            line - 
 %            type - 
 %         weights - 
-%       ignoreinf -
-%           polar -
+%       ignoreinf - 
+%           polar - 
+%     openmarkers - 
 %
 % OUTPUT
 %   h - 
 %
 %
 %   DHK - June 12, 2024
+
+% Wish list:
+%   (1) 'lin' argument behavior for polar plot
+%   (2) 'lin' argument behavior for polar plot
 
 %% Manage input
 
@@ -49,15 +54,16 @@ else % Ensure x is a row vector
     x = reshape(x,1,numel(x));
 end
 
-% Retrive optional arguments that cannot be passed to plot()
+% Retrieve optional arguments that cannot be passed to plot()
 try
     [varargin, wl  ] = inputChecker(varargin,'whiskerlength',0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''WhiskerLength'' must be a numeric scalar.');
-    [varargin, lin ] = inputChecker(varargin,'line',         1, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''Line'' must be a numeric scalar.');
+    [varargin, lin ] = inputChecker(varargin,'line',        [], @(x)iscell(x),                                         'Optional argument ''Line'' must be a numeric scalar.');
     [varargin, type] = inputChecker(varargin,'type',    'cont', @(x)ischar(x)&&any(contains(lower(x),{'cont','prop'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
     [varargin, n   ] = inputChecker(varargin,'weights',     [], @(x)isnumeric(x)&&all(size(x)==size(y)),               'Optional argument ''Weights'' must be a matrix with the same shape as ''y''.');
     [varargin, ign ] = inputChecker(varargin,'ignoreinf',    0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''IgnoreInf'' must be a logical scalar.');
     [varargin, pol ] = inputChecker(varargin,'polar',        0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''Polar'' must be a logical scalar.');
     [varargin, plab] = inputChecker(varargin,'polarlabels', [], @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''PolarLabels'' must be a numeric scalar.');
+    [varargin, opmk] = inputChecker(varargin,'openmarkers', [], @(x)isvector(x)&&numel(x)==size(y,2),                   'Optional argument ''OpenMarkers'' must contain the same number of elements as there are columns in ''y''.');
 catch err
     error(struct('identifier',err.identifier,'message',err.message,'stack',err.stack(end)));
 end
@@ -75,13 +81,20 @@ end
 
 %% Compute plotting variables
 
-% Save initial hold state, temporarily turn hold on
+% Save initial hold state
 ish = ishold;
+
+% Be sure to wipe old plot if hold is off
+if ~ish
+    clf;
+end
+
+% Temporarily turn hold on
 hold on;
 
 % Compute means and standard errors
 switch type
-    case 1
+    case 1 % Continuous data type
         if ign
             i = ~(isinf(y)|isnan(y));
             m = nan(1,size(y,2));
@@ -94,7 +107,7 @@ switch type
             m = nanmean(y); %#ok
             e = nanste(y);
         end
-    case 2
+    case 2 % Proportion data type
         if ign
             i = ~(isinf(y)|isnan(y));
             s = sum(i);
@@ -108,6 +121,8 @@ switch type
         end
         e = sqrt( m.*(1-m) ./ s );
 end
+
+% Convert standard error to ( M +/- SE )
 e = m + [-1;1] .* e;
 
 % Compute whiskers
@@ -130,23 +145,23 @@ if pol  % Polar plot
         plot(cos(t)*i/ntix,sin(t)*i/ntix,'k--');
     end
 
-    % set scale
+    % Set scale
     xyl = [-1,1];
     xlim(xyl);
     ylim(xyl);   
 
-    % draw the quadrants
+    % Draw the quadrants
     plot(xyl,[0,0],'k--');
     plot([0,0],xyl,'k--');
 
-    % draw the means (line?)
+    % Draw the means (line?)
     if xflag
         x = x./numel(x)*2*pi;
     end
     m = (m-zl(1))/range(zl);
     h = plot(cos(x).*m, sin(x).*m, varargin{:}, 'LineStyle', 'none');
 
-    % draw the error bars
+    % Draw the error bars
     e = (e-zl(1))/range(zl);
     for i = 1:size(y,2)
         plot(cos(x(i)).*e(:,i), sin(x(i)).*e(:,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color); % Override the marker property, ensure color matches
@@ -156,7 +171,7 @@ if pol  % Polar plot
         end
     end
 
-    % set scale labels
+    % Set scale labels
     if isempty(plab)
         x = sort(abs(mod(x,pi*2)));
         ad = abs(diff(x(:)));
@@ -171,17 +186,12 @@ if pol  % Polar plot
         text(cos(plab)*i/ntix,sin(plab)*i/ntix,lab{i},...
             'HorizontalAlignment','center','VerticalAlignment','middle');
     end
-    % set(gca,'XTick',[],'YTick',[]);
     axis off;
     
 else % Linear plot   
 
-    % Draw means
-    if lin
-        h = plot(x, m, varargin{:});
-    else
-        h.Color = 'k';
-    end
+    % Get a handle for replicating the plot format
+    h = plot(x, nan(size(x)), varargin{:});
 
     % Draw error bars
     for i = 1:size(y,2)
@@ -191,6 +201,28 @@ else % Linear plot
             plot(w(:,i), [0;0]+e(2,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color);
         end
     end
+
+    % Draw means
+    if isempty(opmk)
+        plot(x, m, varargin{:});
+    else
+        % Override the 'MarkerFaceColor' argument, if provided
+        i = find(strcmpi(varargin,'markerfacecolor'));
+        if isempty(i)
+            i = numel(varargin)+1;
+            varargin{i} = 'markerfacecolor';
+        end
+        varargin{i+1} = 'w';
+
+        % Draw the open-faced markers (draw them all so that they're
+        % all connected with a line)
+        plot(x, m, varargin{:},'Color',h.Color);
+
+        % Draw the closed-faced markers
+        varargin{i+1} = h.Color;
+        plot(x(~opmk), m(~opmk), varargin{:},'Color',h.Color);
+    end
+
 end
 
 %% Restore initial hold state
