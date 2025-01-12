@@ -24,8 +24,9 @@ clear s;
 % Get the buffer size for the strings
 bufstr = max( cellfun(@numel,str) + 2*cellfun(@numel,strfind(str,':')) );
 
-% Get the buffer size for DF1
-bufdf = size(num2str(a.DF1),2);
+% Get the buffer size for DF 1 and 2
+bufdf1 = size(num2str(a.DF1),2);
+bufdf2 = size(num2str(a.DF2),2);
 
 % Get the buffer size for F
 bufF = size(num2str(round(a.FStat*10^2)),2)+1;
@@ -34,7 +35,7 @@ bufF = size(num2str(round(a.FStat*10^2)),2)+1;
 strs = cell(n,1);
 for i = 1:n
     strs{i} =...
-        sprintf(['%',num2str(bufstr),'s: F(%',num2str(bufdf),'d,%d) = %',num2str(bufF),'.2f, p %s'],...
+        sprintf(['%',num2str(bufstr),'s: F(%',num2str(bufdf1),'d,%',num2str(bufdf2),'d) = %',num2str(bufF),'.2f, p %s'],...
         strrep(str{i},':',[' ',char(0xD7),' ']),...
         a.DF1(i),a.DF2(i),a.FStat(i),pval(a.pValue(i)));
     if prnt
