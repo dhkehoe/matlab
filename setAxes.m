@@ -2,37 +2,64 @@ function setAxes(varargin)
 %% manage input
 p = inputParser;
 % Axes object properties
-addOptional(p,'handle',gca,@(x)all(ishandle(x)));
-addOptional(p,'color',[0,0,0],@(x)all(isnumeric(x))&&numel(x)==3);
+addOptional(p,'handle',gca,@(x)isscalar(x)&&ishandle(x));
+addOptional(p,'color',[0,0,0],@(x)isnumeric(x)&&numel(x)==3);
 addOptional(p,'fontsize',12,@(x)isscalar(x)&&isnumeric(x));
-addOptional(p,'format',[],@ischar); % not implemented
+addOptional(p,'format',[],@(x)ischar(x)||isempty(x)); % not implemented
 addOptional(p,'linewidth',1e-6,@(x)isscalar(x)&&isnumeric(x));
 addOptional(p,'ticklength',.01,@(x)isscalar(x)&&isnumeric(x));
-addOptional(p,'interpreter',[],@ischar);
+addOptional(p,'interpreter',[],@(x)ischar||isempty(x));
 % X axis properties
-addOptional(p,'xaxisline',[],@(x)all(isnumeric(x))&&numel(x)==2&&x(1)<=x(2));
-addOptional(p,'xaxislocation','bottom',@(x)any(strcmp(x,{'bottom','top','origin'})));
-addOptional(p,'xlabel',[],@ischar);
-addOptional(p,'xlabeloffset',.025,@(x)isscalar(x)&0<=x);
-addOptional(p,'xlim',[],@(x) all(isnumeric(x))&&numel(x)==2&&x(1)<=x(2));
+addOptional(p,'xaxisline',[],@(x)isnumeric(x)&&numel(x)==2&&x(1)<=x(2)||isempty(x));
+addOptional(p,'xaxislocation',[],@(x)any(strcmp(x,{'bottom','top','origin'}))||isempty(x));
+addOptional(p,'xlabel',[],@(x)ischar(x)||isempty(x));
+addOptional(p,'xlabeloffset',[],@(x)isscalar(x)&&0<=x||isempty(x));
+addOptional(p,'xlim',[],@(x) isnumeric(x)&&numel(x)==2&&x(1)<=x(2)||isempty(x));
 addOptional(p,'xticklabel',[],@(x)iscell(x)||isempty(x));
-addOptional(p,'xtick',[],@(x)all(isnumeric(x))&&issorted(x));
-addOptional(p,'xtickrotation',0,@(x)isscalar(x)&&isnumeric(x));
-addOptional(p,'xinterpreter','tex',@ischar);
+addOptional(p,'xtick',[],@(x)isnumeric(x)&&issorted(x)||isempty(x));
+addOptional(p,'xtickrotation',[],@(x)isscalar(x)&&isnumeric(x)||isempty(x));
+addOptional(p,'xinterpreter',[],@(x)ischar(x)||isempty(x));
 % Y axis properties
-addOptional(p,'yaxisline',[],@(x)all(isnumeric(x))&&numel(x)==2&&x(1)<=x(2));
-addOptional(p,'yaxislocation','left',@(x)any(strcmp(x,{'left','right','origin'})));
-addOptional(p,'ylabel',[],@ischar);
-addOptional(p,'ylabeloffset',.05,@(x)isscalar(x)&0<=x);
-addOptional(p,'ylim',[],@(x) all(isnumeric(x))&&numel(x)==2&&x(1)<=x(2));
+addOptional(p,'yaxisline',[],@(x)isnumeric(x)&&numel(x)==2&&x(1)<=x(2)||isempty(x));
+addOptional(p,'yaxislocation',[],@(x)any(strcmp(x,{'left','right','origin'}))||isempty(x));
+addOptional(p,'ylabel',[],@(x)ischar(x)||isempty(x));
+addOptional(p,'ylabeloffset',[],@(x)isscalar(x)&&0<=x||isempty(x));
+addOptional(p,'ylim',[],@(x) isnumeric(x)&&numel(x)==2&&x(1)<=x(2)||isempty(x));
 addOptional(p,'yticklabel',[],@(x)iscell(x)||isempty(x));
-addOptional(p,'ytick',[],@(x)all(isnumeric(x))&&issorted(x));
-addOptional(p,'ytickrotation',0,@(x)isscalar(x)&&isnumeric(x));
-addOptional(p,'yinterpreter','tex',@ischar);
+addOptional(p,'ytick',[],@(x)isnumeric(x)&&issorted(x)||isempty(x));
+addOptional(p,'ytickrotation',[],@(x)isscalar(x)&&isnumeric(x)||isempty(x));
+addOptional(p,'yinterpreter',[],@(x)ischar(x)||isempty(x));
 
 parse(p,varargin{:}); 
 d = p.UsingDefaults;
 p = p.Results;
+
+%% Default when passed as empty
+if isempty(p.xaxislocation)
+    p.xaxislocation = 'bottom';
+end
+if isempty(p.xlabeloffset)
+    p.xlabeloffset= .025;
+end
+if isempty(p.xtickrotation)
+    p.xtickrotation = 0;
+end
+if isempty(p.xinterpreter)
+    p.xinterpreter = 'tex';
+end
+
+if isempty(p.yaxislocation)
+    p.yaxislocation = 'left';
+end
+if isempty(p.ylabeloffset)
+    p.ylabeloffset = .05;
+end
+if isempty(p.ytickrotation)
+    p.ytickrotation = 0;
+end
+if isempty(p.yinterpreter)
+    p.yinterpreter = 'tex';
+end
 
 %% Make sure all is well with the axes handle
 if ~ishandle(p.handle)
@@ -89,7 +116,7 @@ if isempty(p.xtick)
     elseif strcmp(p.yaxislocation,'origin')
         yPos = 0;
     end
-elseif numel(p.xtick) == 1
+elseif isscalar(p.xtick)
     if strcmp(p.yaxislocation,'left')
         yPos = p.xtick; 
         xAxisLine = [p.xtick p.xlim(2)];
@@ -122,7 +149,7 @@ if isempty(p.ytick)
     elseif strcmp(p.xaxislocation,'origin')
         xPos = 0;
     end
-elseif numel(p.ytick) == 1
+elseif isscalar(p.ytick)
     if strcmp(p.xaxislocation,'bottom')
         xPos = p.ytick; 
         yAxisLine = [p.ytick p.ylim(2)];
