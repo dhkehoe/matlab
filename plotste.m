@@ -13,7 +13,7 @@ function varargout = plotste(x,y,varargin)
 % OPTIONAL INPUT
 %               x - 
 %   whiskerlength - 
-%            line - 
+%           lines - 
 %            type - 
 %         weights - 
 %       ignoreinf - 
@@ -56,14 +56,20 @@ end
 
 % Retrieve optional arguments that cannot be passed to plot()
 try
-    [varargin, wl  ] = inputChecker(varargin,'whiskerlength',0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''WhiskerLength'' must be a numeric scalar.');
-    [varargin, lin ] = inputChecker(varargin,'line',        [], @(x)iscell(x),                                         'Optional argument ''Line'' must be a numeric scalar.');
-    [varargin, type] = inputChecker(varargin,'type',    'cont', @(x)ischar(x)&&any(contains(lower(x),{'cont','prop'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
-    [varargin, n   ] = inputChecker(varargin,'weights',     [], @(x)isnumeric(x)&&all(size(x)==size(y)),               'Optional argument ''Weights'' must be a matrix with the same shape as ''y''.');
-    [varargin, ign ] = inputChecker(varargin,'ignoreinf',    0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''IgnoreInf'' must be a logical scalar.');
-    [varargin, pol ] = inputChecker(varargin,'polar',        0, @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''Polar'' must be a logical scalar.');
-    [varargin, plab] = inputChecker(varargin,'polarlabels', [], @(x)isnumeric(x)&&isscalar(x),                         'Optional argument ''PolarLabels'' must be a numeric scalar.');
-    [varargin, opmk] = inputChecker(varargin,'openmarkers', [], @(x)isvector(x)&&numel(x)==size(y,2),                   'Optional argument ''OpenMarkers'' must contain the same number of elements as there are columns in ''y''.');
+    lin = @(x) isnumeric(x) || ( iscell(x) && all(cellfun(@isnumeric,x)) );
+    [varargin, wl  ] = inputChecker(varargin,'whiskerlength',0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''WhiskerLength'' must be a numeric scalar.');
+    [varargin, lin ] = inputChecker(varargin,'lines',       [], lin,                                           'Optional argument ''Lines'' must be a numeric vector or a cell array of numeric vectors specifying which means to connect with lines.');
+    [varargin, type] = inputChecker(varargin,'type',    'cont', @(x)ischar(x)&&any(strcmpi(x,{'cont','prop'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
+    [varargin, n   ] = inputChecker(varargin,'weights',     [], @(x)isnumeric(x)&&all(size(x)==size(y)),       'Optional argument ''Weights'' must be a matrix with the same shape as ''y''.');
+    [varargin, ign ] = inputChecker(varargin,'ignoreinf',    0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''IgnoreInf'' must be a logical scalar.');
+    [varargin, pol ] = inputChecker(varargin,'polar',        0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''Polar'' must be a logical scalar.');
+    [varargin, plab] = inputChecker(varargin,'polarlabels', [], @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''PolarLabels'' must be a numeric scalar.');
+    [varargin, opmk] = inputChecker(varargin,'openmarkers', [], @(x)isvector(x)&&numel(x)==size(y,2),          'Optional argument ''OpenMarkers'' must contain the same number of elements as there are columns in ''y''.');
+    
+    % Check that any additional arguments are valid when passed directly to
+    % plot(); let plot() catch these
+    plot(nan,nan,varargin{:});
+
 catch err
     error(struct('identifier',err.identifier,'message',err.message,'stack',err.stack(end)));
 end
@@ -77,6 +83,48 @@ if type==2 && isempty(n) % Must provide 'n' if data is proportional
 end
 if ~isempty(n) % If 'weights' arg is provided, 'type' is set to proportional data
     type = 2;
+end
+
+% Default 'lin' values
+if isempty(lin)
+    lin = {1:numel(x)};
+elseif isnumeric(lin)
+    lin = { lin(:)' };
+end
+
+% Ensure these are valid
+if any(cellfun(@min,lin)<1 | numel(x)<cellfun(@min,lin))
+    error('Optional argument ''Lines'' must only contain numeric indices corresponding to columns in ''y''.');
+end
+
+% Ensure there's no repeated indices; O(n^2) worst case - yay!
+if 1<numel(lin)
+
+    % Sort lists from longest to shortest
+    [~,i] = sort(-cellfun(@numel,lin));
+    lin = lin(i);
+    
+    for i = 1:numel(lin)-1 % Step through lists
+        for j = i+1:numel(lin) % N+1 step
+
+            % Now step through the data in the N+1 step
+            for k = find( ~isnan(1:numel(lin{j})) )
+                % Check for repeats with bigger list in N step
+                if any( lin{i} == lin{j}(k) )
+                   lin{j}(k) = nan; % Drop from consideration; best case is ~ O(n)
+                end
+            end
+        end
+    end
+
+    % Loop back through, remove nans, ensure list is sorted
+    for i = 1:numel(lin)
+        lin{i}( isnan(lin{i}) ) = [];
+        lin{i} = sort(lin{i});
+    end
+
+    % Now trim empty sets
+    lin( cellfun(@isempty,lin) ) = [];
 end
 
 %% Compute plotting variables
@@ -191,7 +239,7 @@ if pol  % Polar plot
 else % Linear plot   
 
     % Get a handle for replicating the plot format
-    h = plot(x, nan(size(x)), varargin{:});
+    h = plot(nan,nan,varargin{:});
 
     % Draw error bars
     for i = 1:size(y,2)
@@ -204,7 +252,9 @@ else % Linear plot
 
     % Draw means
     if isempty(opmk)
-        plot(x, m, varargin{:});
+        for i = 1:numel(lin)
+            plot(x(lin{i}),m(lin{i}),varargin{:});
+        end
     else
         % Override the 'MarkerFaceColor' argument, if provided
         i = find(strcmpi(varargin,'markerfacecolor'));
@@ -216,11 +266,13 @@ else % Linear plot
 
         % Draw the open-faced markers (draw them all so that they're
         % all connected with a line)
-        plot(x, m, varargin{:},'Color',h.Color);
+        for j = 1:numel(lin)
+            plot(x(lin{j}), m(lin{j}), varargin{:},'Color',h.Color);
+        end
 
         % Draw the closed-faced markers
         varargin{i+1} = h.Color;
-        plot(x(~opmk), m(~opmk), varargin{:},'Color',h.Color);
+        plot(x(~opmk), m(~opmk), varargin{:},'Color',h.Color,'LineStyle','none');
     end
 
 end
