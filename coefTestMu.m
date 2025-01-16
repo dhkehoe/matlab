@@ -1,4 +1,4 @@
-function [p,F,df,H] = coefTestMu(model,h0)
+function [p,F,df,H,strs] = coefTestMu(model,h0)
 % Test all of the cell means (mu parameters) from a fitted GLM or GLME
 % model against some null hypothesis. See fitglm() and fitglme() in the
 % Statistics and Machine Learning toolbox.
@@ -11,7 +11,9 @@ function [p,F,df,H] = coefTestMu(model,h0)
 % Also return an N by N coefficient contrast matrix, 'H', where each row
 % corresponds to a cell mean of the design matrix and each column
 % corresponds to a fitted coefficient. Can be used to subsequently test
-% contrasts of individual cell means with coefTest().
+% contrasts of individual cell means with coefTest(). I have subsequently
+% decided it should also optionally return the string names of the model
+% factors in the same order that they were entered into the model.
 %
 %
 %   DHK - June 12, 2024
@@ -39,7 +41,7 @@ for i = find(contains(c,':'))
     m = numel(ni)+1; % Get the number of interactions
     f  = cell(1,m); % List of factor string names
 
-    % Parse the string to retrive the interaction factor string
+    % Parse the string to retrieve the interaction factor string
     s = 1; % Start of string
     for j = 1:numel(ni) % Number of factors minus 1
         f{j} = c{i}(s:ni(j)-1);
@@ -117,9 +119,10 @@ for i = 1:n
 end
 
 % Reshape
-if numel(lvls) == 1
+if isscalar(lvls)
     lvls = [lvls,1];
 end
 p  = reshape(p,lvls);
 F  = reshape(F,lvls);
 df = reshape(df,lvls);
+strs = unique(f);
