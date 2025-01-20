@@ -8,6 +8,12 @@ function seqs = sequence(x,len,pool)
 % Indices in 'seqs' correspond to linear indices of 'x', regardless of the
 % shape of 'x'.
 
+% Leave early
+if isempty(x)
+    seqs = [];
+    return;
+end
+
 % Default pooling argument, catch errors
 if nargin<3
     pool = 0; 
