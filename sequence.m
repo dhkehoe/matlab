@@ -8,9 +8,15 @@ function seqs = sequence(x,len,pool)
 % Indices in 'seqs' correspond to linear indices of 'x', regardless of the
 % shape of 'x'.
 
-if nargin<3, pool=0; % Default to no pooling
-elseif ~isnumeric(pool) || ~isscalar(pool); error('Argument ''pool'' must be a numeric scalar.');
+% Default pooling argument, catch errors
+if nargin<3
+    pool = 0; 
+elseif ~(isnumeric(pool) && isscalar(pool))
+    error('Argument ''pool'' must be a numeric scalar.');
 end
+
+% Remove NaNs
+x(isnan(x)) = 0;
 
 % Try getting all the sequences from the recursive subroutine
 try
