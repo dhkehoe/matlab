@@ -1,5 +1,5 @@
 // mex instructions:
-// mex owens_t.cpp__ -I'C:\boost_1_87_0' -output owens_t__
+// mex owens_t__.cpp -I'C:\boost_1_87_0' -output owens_t__
 
 #include "mexAdapter.hpp"
 #include <stdexcept>
