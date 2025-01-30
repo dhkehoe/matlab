@@ -54,6 +54,11 @@ else % Ensure x is a row vector
     x = reshape(x,1,numel(x));
 end
 
+% Quick error check
+if ~(isnumeric(y) && isnumeric(x))
+    error('Non-numeric data is invalid for plotting.');
+end
+
 % Save initial hold state
 ish = ishold;
 
@@ -63,7 +68,7 @@ try
     [varargin, wl  ] = inputChecker(varargin,'whiskerlength',0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''WhiskerLength'' must be a numeric scalar.');
     [varargin, lin ] = inputChecker(varargin,'lines',       [], lin,                                           'Optional argument ''Lines'' must be a numeric vector or a cell array of numeric vectors specifying which means to connect with lines.');
     [varargin, type] = inputChecker(varargin,'type',    'cont', @(x)ischar(x)&&any(strcmpi(x,{'cont','prop'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
-    [varargin, n   ] = inputChecker(varargin,'weights',     [], @(x)isnumeric(x)&&all(size(x)==size(y)),       'Optional argument ''Weights'' must be a matrix with the same shape as ''y''.');
+    [varargin, n   ] = inputChecker(varargin,'weights',     [], @(x)isnumeric(x)&&all(size(x)==size(y)),       'Optional argument ''Weights'' must be a numeric matrix with the same shape as ''y''.');
     [varargin, ign ] = inputChecker(varargin,'ignoreinf',    0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''IgnoreInf'' must be a logical scalar.');
     [varargin, pol ] = inputChecker(varargin,'polar',        0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''Polar'' must be a logical scalar.');
     [varargin, plab] = inputChecker(varargin,'polarlabels', [], @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''PolarLabels'' must be a numeric scalar.');
