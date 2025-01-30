@@ -54,6 +54,9 @@ else % Ensure x is a row vector
     x = reshape(x,1,numel(x));
 end
 
+% Save initial hold state
+ish = ishold;
+
 % Retrieve optional arguments that cannot be passed to plot()
 try
     lin = @(x) isnumeric(x) || ( iscell(x) && all(cellfun(@isnumeric,x)) );
@@ -66,9 +69,15 @@ try
     [varargin, plab] = inputChecker(varargin,'polarlabels', [], @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''PolarLabels'' must be a numeric scalar.');
     [varargin, opmk] = inputChecker(varargin,'openmarkers', [], @(x)isvector(x)&&numel(x)==size(y,2),          'Optional argument ''OpenMarkers'' must contain the same number of elements as there are columns in ''y''.');
     
+    % Be sure to wipe old plot if hold is off
+    if ~ish
+        clf;
+    end
+
     % Check that any additional arguments are valid when passed directly to
     % plot(); let plot() catch these
-    plot(nan,nan,varargin{:});
+    h = plot(nan,nan,varargin{:});
+    % Get a handle for replicating the plot format
 
 catch err
     error(struct('identifier',err.identifier,'message',err.message,'stack',err.stack(end)));
@@ -93,7 +102,7 @@ elseif isnumeric(lin)
 end
 
 % Ensure these are valid
-if any(cellfun(@min,lin)<1 | numel(x)<cellfun(@min,lin))
+if any(cellfun(@min,lin)<1 | numel(x)<cellfun(@max,lin))
     error('Optional argument ''Lines'' must only contain numeric indices corresponding to columns in ''y''.');
 end
 
@@ -128,14 +137,6 @@ if 1<numel(lin)
 end
 
 %% Compute plotting variables
-
-% Save initial hold state
-ish = ishold;
-
-% Be sure to wipe old plot if hold is off
-if ~ish
-    clf;
-end
 
 % Temporarily turn hold on
 hold on;
@@ -238,9 +239,6 @@ if pol  % Polar plot
     
 else % Linear plot   
 
-    % Get a handle for replicating the plot format
-    h = plot(nan,nan,varargin{:});
-
     % Draw error bars
     for i = 1:size(y,2)
         plot([0;0]+x(i), e(:,i), varargin{:}, 'LineStyle','-','Marker','none','Color',h.Color); % Override the marker property, ensure color matches
@@ -253,7 +251,7 @@ else % Linear plot
     % Draw means
     if isempty(opmk)
         for i = 1:numel(lin)
-            plot(x(lin{i}),m(lin{i}),varargin{:});
+            plot(x(lin{i}),m(lin{i}),varargin{:},'Color',h.Color);
         end
     else
         % Override the 'MarkerFaceColor' argument, if provided
