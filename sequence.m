@@ -21,7 +21,7 @@ elseif ~(isnumeric(pool) && isscalar(pool))
     error('Argument ''pool'' must be a numeric scalar.');
 end
 
-% Default pooling argument, catch errors
+% Default len argument, catch errors
 if nargin<2 || isempty(len)
     len = 1; 
 elseif ~(isnumeric(len) && isscalar(len)) || mod(len,1) || len<1
