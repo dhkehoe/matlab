@@ -15,10 +15,17 @@ if isempty(x)
 end
 
 % Default pooling argument, catch errors
-if nargin<3
+if nargin<3 || isempty(pool)
     pool = 0; 
 elseif ~(isnumeric(pool) && isscalar(pool))
     error('Argument ''pool'' must be a numeric scalar.');
+end
+
+% Default pooling argument, catch errors
+if nargin<2 || isempty(len)
+    len = 1; 
+elseif ~(isnumeric(len) && isscalar(len)) || mod(len,1) || len<1
+    error('Argument ''len'' must be a scalar integer > 0.');
 end
 
 % Remove NaNs
