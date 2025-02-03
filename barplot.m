@@ -90,6 +90,10 @@ x = repmat( size(y,1):size(y,1):size(y,2)*size(y,1) ,[size(y,1) 1])... % Group c
     +repmat( (0:size(y,1)-1)' ,[1 size(y,2)])... % Add within group displacement
     +repmat(offset,[size(y,1) 1]); % Add between groups displacement
 
+% Encode whether these data are plottable
+vy = ~( isnan(y) | isinf(y) );
+ve = ~( isnan(e) | isinf(e) );
+
 % If no colour is specified, just use maximally distant HSV hue values
 if isempty(p.color)
     hvals = linspace(1,1/size(y,1),size(y,1));
@@ -100,7 +104,9 @@ end
 xl = [min(x(:))-p.spacing*p.xpad-p.barwidth/2, max(x(:))+p.spacing*p.xpad+p.barwidth/2];
 
 % Plot handles for legend if necessary
-if ~isempty(p.grpstr), h = 1:size(x,1); end
+if ~isempty(p.grpstr)
+    h = 1:size(x,1);
+end
 
 %% Plot
 
@@ -108,27 +114,30 @@ if ~isempty(p.grpstr), h = 1:size(x,1); end
 ih = ishold;
 hold on;
 
-for i =1:size(x,1)
+for i = 1:size(x,1)
     % Get plot handles for legend if necessary
-    if ~isempty(p.grpstr), h(i) = bar(0,0,'FaceColor',p.color(i,:)); end
+    if ~isempty(p.grpstr)
+        h(i) = bar(0,0,'FaceColor',p.color(i,:));
+    end
+    
     for j = 1:size(x,2)
         % Draw bars
-        if y(i,j)>0
-            rectangle('Position',[x(i,j)-p.barwidth/2, 0, p.barwidth, y(i,j)],...
+        if vy(i,j)
+            rectangle('Position',[x(i,j)-p.barwidth/2, min([0,y(i,j)]), p.barwidth, abs(y(i,j))],...
                 'FaceColor',p.color(i,:),'LineStyle','none'); %[left, bottom, width, height]
-        else
-            rectangle('Position',[x(i,j)-p.barwidth/2, y(i,j), p.barwidth, abs(y(i,j))],...
-                'FaceColor',p.color(i,:),'LineStyle','none'); %[left, bottom, width, height]
+
+            % Put lines around bars, except along x axis
+            plot(x(i,j)+[-1,-1,1,1]*p.barwidth/2, [0,1,1,0]*y(i,j),'k-');
         end
-        % Put lines around bars, except along x axis
-        plot(x(i,j)+[-1,-1,1,1]*p.barwidth/2, [0,1,1,0]*y(i,j),'k-');
 
         % Plot error bars
-        if isnan(e), continue, end
-        plot( [x(i,j), x(i,j)], [y(i,j)-e(i,j), y(i,j)+e(i,j)],'-','Color','k','LineWidth',p.linewidth );
-        % Plot error bar whiskers
-        plot( [x(i,j)-p.whisklen, x(i,j)+p.whisklen], [y(i,j)-e(i,j), y(i,j)-e(i,j)],'-','Color','k','LineWidth',p.linewidth );
-        plot( [x(i,j)-p.whisklen, x(i,j)+p.whisklen], [y(i,j)+e(i,j), y(i,j)+e(i,j)],'-','Color','k','LineWidth',p.linewidth );
+        if ve(i,j)
+            plot( [x(i,j), x(i,j)], [y(i,j)-e(i,j), y(i,j)+e(i,j)],'-','Color','k','LineWidth',p.linewidth );
+            
+            % Plot error bar whiskers
+            plot( [x(i,j)-p.whisklen, x(i,j)+p.whisklen], [y(i,j)-e(i,j), y(i,j)-e(i,j)],'-','Color','k','LineWidth',p.linewidth );
+            plot( [x(i,j)-p.whisklen, x(i,j)+p.whisklen], [y(i,j)+e(i,j), y(i,j)+e(i,j)],'-','Color','k','LineWidth',p.linewidth );
+        end
     end
 end
 
