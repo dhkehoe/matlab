@@ -80,7 +80,7 @@ function setTicksAndLabels(com,b,lf)
 if ~isempty(b)
 
     % Get the ticks
-    tix = get(gca, [com,'Tick']);
+    tix = round(get(gca, [com,'Tick']),10);
 
     % Find the ticks that are some power of the base
     tix = tix(~mod(tix,1));
