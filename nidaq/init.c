@@ -53,16 +53,16 @@ PsychError PsychModuleInit(void)
     PsychSetModuleAuthorByInitials("dhk");
 
 	// Register sub-commands
-    PsychErrorExit(PsychRegister("Open",            &Initialize));
-    PsychErrorExit(PsychRegister("Close",           &Uninitialize));
-    PsychErrorExit(PsychRegister("IsOpen",          &IsInitialized));
-
+    PsychErrorExit(PsychRegister("WaveformDIO",     &WaveformDIO));
     PsychErrorExit(PsychRegister("ReadDIO",         &ReadDIO));
     PsychErrorExit(PsychRegister("WriteDIO",        &WriteDIO));
     PsychErrorExit(PsychRegister("ReadAI",          &ReadAI));
     PsychErrorExit(PsychRegister("WriteAO",         &WriteAO));
-
-    // Initialize the device handle
+    PsychErrorExit(PsychRegister("ConnectDIO",      &ConnectDIO));
+    PsychErrorExit(PsychRegister("DisconnectDIO",   &DisconnectDIO));
+    PsychErrorExit(PsychRegister("Reset",           &Reset));
+        
+    // Initialize the generic device handle
     taskHandle = NULL;
 
 	return(PsychError_none);
@@ -77,30 +77,34 @@ void InitializeSynopsis()
 
 	synopsis[i++] = "\n% This is the main function of the nidaq Toolbox.";
 	synopsis[i++] = "\nUsage:";
-    
-	// Initialization
-	synopsis[i++] = "\n% Initialize, shutdown, and check status of connection to NI-DAQ:";
-	synopsis[i++] = "[connected =] nidaq('Open')";
-	synopsis[i++] = "[connected =] nidaq('Close')";
-	synopsis[i++] = "connected = nidaq('IsOpen')";
 
     // Read/write
     synopsis[i++] = "\n% Read and write NI-DAQ pin states:";
-	synopsis[i++] = "[state, success] = nidaq('ReadDIO',)";
-    synopsis[i++] = "[volts, success] = nidaq('ReadAI',)";
-    synopsis[i++] = "[success =] nidaq('WriteDIO',)";
-    synopsis[i++] = "[success =] nidaq('WriteAO',)";
+	synopsis[i++] = "state = nidaq('ReadDIO', device, port, channel)";
+    synopsis[i++] = "volts = nidaq('ReadAI', device, channel, config [,reads]);";
+    synopsis[i++] = "nidaq('WriteDIO', device, port, channel, state)";
+    synopsis[i++] = "nidaq('WriteAO', device, channel, volts)";
+    synopsis[i++] = "nidaq('WaveformDIO', device, rate, channel, wave)";
 
+    // Connect/disconnect
+    synopsis[i++] = "\n% Configuration settings for NI-DAQ:";
+    synopsis[i++] = "nidaq('ConnectDIO', device, sourcePFI, destinationPFI)";
+    synopsis[i++] = "nidaq('DisconnectDIO', device, sourcePFI, destinationPFI)";
+    
+    // Device reset
+    synopsis[i++] = "\n% Device settings for NI-DAQ:";
+    synopsis[i++] = "nidaq('Reset', device)";
+    
     // Extra help
-    synopsis[i++] = "\n% For general advice, try:";
+    synopsis[i++] = "\n\n% For general advice, try:";
     synopsis[i++] = "help nidaq";
     synopsis[i++] = "\n% For a more detailed explanation of any nidaq function, just add a question mark \"?\".";
-    synopsis[i++] = "% E.g., for an explanation of 'Initialize', try either of these equivalent forms:";
-    synopsis[i++] = "nidaq('Initialize?')";
-    synopsis[i++] = "nidaq Initialize?";
+    synopsis[i++] = "% E.g., for an explanation of 'ReadDIO', try either of these equivalent forms:";
+    synopsis[i++] = "nidaq('ReadDIO?')";
+    synopsis[i++] = "nidaq ReadDIO?";
 
 	// Place Holder
-	synopsis[i++] = "\n\n% NI-DAQmx Toolbox for PsychToolbox";
+	synopsis[i++] = "\n\n% NI-DAQ-mx Toolbox for PsychToolbox";
 	synopsis[i++] = "% This Toolbox was developed by:\n";
 	synopsis[i++] = "\tDevin H. Kehoe";
 	
@@ -119,35 +123,4 @@ PsychError PsychDisplaySynopsis(void)
 		printf("%s\n", synopsisSYNOPSIS[i]);
 	}
 	return(PsychError_none);
-}
-
-
-///////////////////////////////////////////////////////////////////////////
-// Open the connection to the NI-DAQ. Get device handle. Set defaults.
-void Open(void)
-{
-    if( taskHandle==NULL ) {
-        // int32 __CFUNC DAQmxCreateTask(const char taskName[], TaskHandle *taskHandle);
-        DAQmxErrChk(DAQmxCreateTask("", &taskHandle));
-
-        // Update connected global scope variable
-        connected = (bool)taskHandle;
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////
-// Close the connection to the NI-DAQ. Release memory.
-void Close(void)
-{
-    if( taskHandle!=NULL ) {
-        // int32 __CFUNC DAQmxStopTask(TaskHandle taskHandle);
-        DAQmxStopTask(taskHandle);
-
-        // int32 __CFUNC DAQmxClearTask(TaskHandle taskHandle);
-        DAQmxClearTask(taskHandle);
-
-        // Update connected global scope variables
-        taskHandle = NULL;
-        connected = (bool)taskHandle;
-    }
 }
