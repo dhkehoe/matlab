@@ -10,3 +10,6 @@ x = (x-mu)./sigma;
 
 % Compute function
 y = normcdf(x) - 2*owens_t(x,alpha);
+
+% Protect from lack of precision
+y(y<1e-15) = 0;
