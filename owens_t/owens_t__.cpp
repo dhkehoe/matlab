@@ -13,7 +13,7 @@ public:
         if (inputs.size() != 2)
             throw std::invalid_argument( "Must pass 2 arguments" );
 
-        // Get TypedArray<T> pointers to input arrays
+        // Get TypedArray<double> pointers to input arrays
         matlab::data::TypedArray<double> h = std::move(inputs[0]);
         matlab::data::TypedArray<double> a = std::move(inputs[1]);
 
@@ -33,23 +33,30 @@ public:
         matlab::data::ArrayFactory f;
         matlab::data::TypedArray<double> y = f.createArray<double>(std::vector<size_t>{std::max(n,m)});
 
-        // To avoid repeated cast in loops, cast pointers:
-        // TypedArray<double> -> unique_ptr<double[]> -> double*
-        double* H = h.release().get();
-        double* A = a.release().get();
+        // Cast MATLAB TypedArrays to STL
+        // TypedArray<double> -> unique_ptr<double[]>
+        auto H = h.release();
+        auto A = a.release();
+
+        // Define data policy
+        typedef boost::math::policies::policy<
+            boost::math::policies::promote_double<false>,
+            boost::math::policies::promote_float<false>,
+            boost::math::policies::max_series_iterations<100>
+            > my_policy;
 
         // Compute output
         if (n == m) {
             for(size_t i = 0; i < n; i++)
-                y[i] = boost::math::owens_t(H[i], A[i]);
+                y[i] = boost::math::owens_t(H[i], A[i], my_policy());
         }
         else if (m == 1) {
             for(size_t i = 0; i < n; i++)
-                y[i] = boost::math::owens_t(H[i], A[0]);
+                y[i] = boost::math::owens_t(H[i], A[0], my_policy());
         }
-        else if (n == 1) {
+        else { // if (n == 1)
             for(size_t i = 0; i < m; i++)
-                y[i] = boost::math::owens_t(H[0], A[i]);
+                y[i] = boost::math::owens_t(H[0], A[i], my_policy());
         }    
           
         // Return output
