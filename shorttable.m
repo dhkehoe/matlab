@@ -248,19 +248,21 @@ idx = zeros(1,n);
 
 for i = 1:n % Step through x
 
+    xi = x{i}; % Matlab, give us enumerators please
+
     % Convert table headers to logical indices
     if ~isempty(header)
-        x{i} = strcmp(header,x{i});
+        xi = strcmp(header,xi);
     end
 
     % Convert logical indices to numeric indices
-    if islogical(x{i})
-        x{i} = find(x{i});
+    if islogical(xi)
+        xi = find(xi);
     end
 
     % Check that it is a valid numeric index
-    if isnumeric(x{i}) && isscalar(x{i}) && ~mod(x{i},1) && 1<=x{i} && x{i}<=m
-        idx(i) = x{i};
+    if isnumeric(xi) && isscalar(xi) && ~mod(xi,1) && 1<=xi && xi<=m
+        idx(i) = xi;
     else
         idx(i) = 0; % Invalid
     end
