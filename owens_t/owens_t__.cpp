@@ -1,5 +1,5 @@
 // mex instructions:
-// mex owens_t__.cpp -I'C:\boost_1_87_0' -output owens_t__
+// mex owens_t.cpp -I'C:\boost_1_87_0' -output owens_t
 
 #include "mexAdapter.hpp"
 #include <stdexcept>
@@ -9,9 +9,9 @@ class MexFunction : public matlab::mex::Function {
 public:
     void operator()(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs) {
         
-        // Ensure 2 inputs
+        // Ensure correct number of inputs
         if (inputs.size() != 2)
-            throw std::invalid_argument( "Must pass 2 arguments" );
+            throw std::invalid_argument("Must pass 2 arguments.");
 
         // Get TypedArray<double> pointers to input arrays
         matlab::data::TypedArray<double> h = std::move(inputs[0]);
@@ -19,7 +19,7 @@ public:
 
         // Return if either input is empty
         if ( h.isEmpty() || a.isEmpty() )
-            throw std::invalid_argument( "Empty array passed" );
+            throw std::invalid_argument("One or more empty argument(s) passed.");
 
         // Get array sizes
         size_t n = h.getNumberOfElements();
@@ -27,18 +27,27 @@ public:
         
         // Ensure matching sizes of h and a or that at least one is scalar
         if (  !(n == m || n == 1 || m == 1)  )
-            throw std::invalid_argument( "Input array size mismatch" );
+            throw std::invalid_argument("Input size mismatch. Arguments must be either the same size or at least one argument must be scalar.");
+
+        // Determine which input size to replicate
+        matlab::data::ArrayDimensions dim;
+        if (n<m)
+            dim = a.getDimensions();
+        else
+            dim = h.getDimensions();
 
         // Allocate memory for output
         matlab::data::ArrayFactory f;
-        matlab::data::TypedArray<double> y = f.createArray<double>(std::vector<size_t>{std::max(n,m)});
+        matlab::data::TypedArray<double> y = f.createArray<double>(dim);
 
-        // Cast MATLAB TypedArrays to STL
-        // TypedArray<double> -> unique_ptr<double[]>
-        auto H = h.release();
-        auto A = a.release();
+        // Cast  matlab::data::TypedArrays<double>  to  matlab::data::buffer_ptr_t<double>
+        // which is simply a wrapper around std::unique_ptr<T[]>. Therefore,
+        //  buffer_ptr_t<T>[] operator returns data, whereas
+        //  TypedArrays<T>[] operator returns some other silly object: ArrayElementTypedRef<T, true>
+        matlab::data::buffer_ptr_t<double> H = h.release();
+        matlab::data::buffer_ptr_t<double> A = a.release();
 
-        // Define data policy
+        // Define data policy for boost::math
         typedef boost::math::policies::policy<
             boost::math::policies::promote_double<false>,
             boost::math::policies::promote_float<false>,
@@ -46,18 +55,20 @@ public:
             > my_policy;
 
         // Compute output
-        if (n == m) {
-            for(size_t i = 0; i < n; i++)
-                y[i] = boost::math::owens_t(H[i], A[i], my_policy());
-        }
-        else if (m == 1) {
-            for(size_t i = 0; i < n; i++)
-                y[i] = boost::math::owens_t(H[i], A[0], my_policy());
-        }
-        else { // if (n == 1)
-            for(size_t i = 0; i < m; i++)
-                y[i] = boost::math::owens_t(H[0], A[i], my_policy());
-        }    
+        // NOTE: must use iterator to write to n-dimensional 
+        //       matlab::data::TypedArray<T>(matlab::data::ArrayDimensions)
+        //       object in linear order.
+        size_t i = 0; // For simple linear indexing of input arrays
+        if (n == m)
+            for(matlab::data::TypedIterator<double> yi = y.begin(); yi != y.end(); yi++, i++)
+                *yi = boost::math::owens_t(H[i], A[i], my_policy());       
+        else if (m == 1)
+            for(matlab::data::TypedIterator<double> yi = y.begin(); yi != y.end(); yi++, i++)
+                *yi = boost::math::owens_t(H[i], A[0], my_policy());
+        else // if (n == 1)
+            for(matlab::data::TypedIterator<double> yi = y.begin(); yi != y.end(); yi++, i++)              
+                *yi = boost::math::owens_t(H[0], A[i], my_policy());
+    
           
         // Return output
         outputs[0] = y;
