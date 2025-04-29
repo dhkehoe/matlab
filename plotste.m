@@ -65,14 +65,15 @@ ish = ishold;
 % Retrieve optional arguments that cannot be passed to plot()
 try
     lin = @(x) isnumeric(x) || ( iscell(x) && all(cellfun(@isnumeric,x)) );
-    [varargin, wl  ] = inputChecker(varargin,'whiskerlength',0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''WhiskerLength'' must be a numeric scalar.');
-    [varargin, lin ] = inputChecker(varargin,'lines',       [], lin,                                           'Optional argument ''Lines'' must be a numeric vector or a cell array of numeric vectors specifying which means to connect with lines.');
-    [varargin, type] = inputChecker(varargin,'type',    'cont', @(x)ischar(x)&&any(strcmpi(x,{'cont','prop'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
-    [varargin, n   ] = inputChecker(varargin,'weights',     [], @(x)isnumeric(x)&&all(size(x)==size(y)),       'Optional argument ''Weights'' must be a numeric matrix with the same shape as ''y''.');
-    [varargin, ign ] = inputChecker(varargin,'ignoreinf',    0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''IgnoreInf'' must be a logical scalar.');
-    [varargin, pol ] = inputChecker(varargin,'polar',        0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''Polar'' must be a logical scalar.');
-    [varargin, plab] = inputChecker(varargin,'polarlabels', [], @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''PolarLabels'' must be a numeric scalar.');
-    [varargin, opmk] = inputChecker(varargin,'openmarkers', [], @(x)isvector(x)&&numel(x)==size(y,2),          'Optional argument ''OpenMarkers'' must contain the same number of elements as there are columns in ''y''.');
+    [varargin, wl  ] = inputChecker(varargin,'whiskerlength',  0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''WhiskerLength'' must be a numeric scalar.');
+    [varargin, lin ] = inputChecker(varargin,'lines',         [], lin,                                           'Optional argument ''Lines'' must be a numeric vector or a cell array of numeric vectors specifying which means to connect with lines.');
+    [varargin, type] = inputChecker(varargin,'type',      'cont', @(x)ischar(x)&&any(strcmpi(x,{'cont','prop'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
+    [varargin, n   ] = inputChecker(varargin,'weights',       [], @(x)isnumeric(x)&&all(size(x)==size(y)),       'Optional argument ''Weights'' must be a numeric matrix with the same shape as ''y''.');
+    [varargin, ign ] = inputChecker(varargin,'ignoreinf',      0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''IgnoreInf'' must be a logical scalar.');
+    [varargin, pol ] = inputChecker(varargin,'polar',          0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''Polar'' must be a logical scalar.');
+    [varargin, plin] = inputChecker(varargin,'polarlinestyle',[], @ischar,                                       'Optional argument ''PolarLineStyle'' must be a string specifying the line style. See the documentation for plot().');
+    [varargin, plab] = inputChecker(varargin,'polarlabels',   [], @(x)isnumeric(x)&&isscalar(x)||iscell(x),      'Optional argument ''PolarLabels'' must be a numeric scalar.');
+    [varargin, opmk] = inputChecker(varargin,'openmarkers',   [], @(x)isvector(x)&&numel(x)==size(y,2),          'Optional argument ''OpenMarkers'' must contain the same number of elements as there are columns in ''y''.');
     
     % Be sure to wipe old plot if hold is off
     if ~ish
@@ -154,24 +155,24 @@ switch type
             m = nan(1,size(y,2));
             e = m;
             for j = 1:numel(m)
-                m(j) = mean(y(i(:,j),j));
-                e(j) = sqrt(  sum( (y(i(:,j),j)-m(j)).^2 ) ./ (sum(i(:,j))-1) ./sum(i(:,j))  );
+                m(j) = mean(y(i(:,j),j), 1);
+                e(j) = sqrt(  sum( (y(i(:,j),j)-m(j)).^2, 1) ./ (sum(i(:,j),1)-1) ./sum(i(:,j),1)  );
             end
         else
-            m = nanmean(y); %#ok
-            e = nanste(y);
+            m = nanmean(y,1); %#ok
+            e = nanste(y,[],1);
         end
     case 2 % Proportion data type
         if ign
             i = ~(isinf(y)|isnan(y));
-            s = sum(i);
+            s = sum(i,1);
             m = nan(1,size(y,2));
             for j = 1:numel(m)
-                m(j) = sum(y(i(:,j),j)) ./ s(j);
+                m(j) = sum(y(i(:,j),j),1) ./ s(j);
             end
         else
-            s = nansum(n); %#ok
-            m = nansum( y.* n ) ./ s; %#ok            
+            s = nansum(n,1); %#ok
+            m = nansum( y.* n, 1 ) ./ s; %#ok            
         end
         e = sqrt( m.*(1-m) ./ s );
 end
@@ -188,6 +189,10 @@ end
 
 if pol  % Polar plot
 
+    if isempty(plin)
+        plin = '--';
+    end
+
     % Compute the y-scaling
     [zl, tix, lab] = axlim(rangei(e,[],'all'));
     % units = tix(2)-tix(1);
@@ -196,7 +201,7 @@ if pol  % Polar plot
     ntix = numel(tix);
     t = 0:.01:2.01*pi;
     for i = 1:ntix
-        plot(cos(t)*i/ntix,sin(t)*i/ntix,'k--');
+        plot(cos(t)*i/ntix,sin(t)*i/ntix,'k','LineStyle',plin);
     end
 
     % Set scale
@@ -205,15 +210,23 @@ if pol  % Polar plot
     ylim(xyl);   
 
     % Draw the quadrants
-    plot(xyl,[0,0],'k--');
-    plot([0,0],xyl,'k--');
+    plot(xyl,[0,0],'k--','LineStyle',plin);
+    plot([0,0],xyl,'k--','LineStyle',plin);
 
     % Draw the means (line?)
     if xflag
         x = x./numel(x)*2*pi;
     end
     m = (m-zl(1))/range(zl);
-    h = plot(cos(x).*m, sin(x).*m, varargin{:}, 'LineStyle', 'none');
+    
+    % Make the line connect on itself
+    i = find(strcmpi('linestyle',varargin));
+    if ~isempty(i) && any(contains({'-',':','--','.-'},varargin{i+1}))
+        x = [x,x(1)];
+        m = [m,m(1)];
+        e = [e,e(:,1)];
+    end
+    h = plot(cos(x).*m, sin(x).*m, varargin{:});%, 'LineStyle', 'none');
 
     % Draw the error bars
     e = (e-zl(1))/range(zl);
@@ -240,6 +253,8 @@ if pol  % Polar plot
         text(cos(plab)*i/ntix,sin(plab)*i/ntix,lab{i},...
             'HorizontalAlignment','center','VerticalAlignment','middle');
     end
+    yh = text(cos(plab)*(i+1)/ntix,sin(plab)*(i+1)/ntix,'',...
+        'HorizontalAlignment','center','VerticalAlignment','middle');
     axis off;
     
 else % Linear plot   
@@ -286,6 +301,9 @@ if ~ish
 end
 
 %% Set return args
-if nargout
+if 0<nargout
     varargout{1} = h;
+end
+if 1<nargout && pol
+    varargout{2} = yh;
 end
