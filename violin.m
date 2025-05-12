@@ -48,8 +48,10 @@ sideStr = {'both','right','left'};
 try
     [varargin, width] = inputChecker(varargin,'width',.8, @(x)isnumeric(x)&&isscalar(x), 'Optional argument ''Width'' must be a numeric scalar.');
     [varargin,    bw] = inputChecker(varargin,'bandwidth',[], @(x)isnumeric(x)&&isscalar(x), 'Optional argument ''Bandwidth'' must be a numeric scalar.');
-    [varargin,  prec] = inputChecker(varargin,'precision',101, @(x)isnumeric(x)&&isscalar(x), 'Optional argument ''Precision'' must be a numeric scalar.');
+    [varargin,  prec] = inputChecker(varargin,'precision',[], @(x)isnumeric(x)&&isscalar(x), 'Optional argument ''Precision'' must be a numeric scalar.');
     [varargin,  side] = inputChecker(varargin,'side','both', @(x)ischar(x)&&any(strcmpi(x,sideStr)), 'Optional argument ''Side'' must be one of the following strings: ''both'', ''right'', or ''left''.');
+    [varargin,bounds] = inputChecker(varargin,'bounds',[], @(x)isnumeric(x)&&numel(x)==2&&issorted(x), 'Optional argument ''Bounds'' must be a sorted, 2-element vector.');
+    [varargin,domain] = inputChecker(varargin,'domain',[], @isnumeric, 'Optional argument ''Domain'' must be numeric.');
 catch err
     % Trim inputChecker from the call stack in the error report
     error(struct('identifier',err.identifier,'message',err.message,'stack',err.stack(end)));
@@ -78,9 +80,18 @@ end
 
 
 %% Fit the KDEs to the data
-kdearg = {'npoints',prec};
+kdearg = {};
 if ~isempty(bw)
     kdearg = [kdearg, 'bw', bw];
+end
+if ~isempty(prec)
+    kdearg = [kdearg, 'npoints', prec];
+end
+if ~isempty(bounds)
+    kdearg = [kdearg, 'bounds',bounds];
+end
+if ~isempty(domain)
+    kdearg = [kdearg, 'domain',domain];
 end
 
 fx = cell(ngrp,ncon);
@@ -115,7 +126,9 @@ for i = 1:ngrp
     for j = 1:ncon
         switch side
             case 1 % both
-                fill( [fy{i,j},-fliplr(fy{i,j})]/mmax*width+x(i),[fx{i,j},fliplr(fx{i,j})],'k','FaceColor',col{j},varargin{:});
+                fx{i,j} = [ fx{i,j},  fliplr(fx{i,j}) ];
+                fy{i,j} = [ fy{i,j}, -fliplr(fy{i,j}) ] / mmax*width + x(i);
+                fill(fy{i,j},fx{i,j},'k','FaceColor',col{j},varargin{:});
             case 2 % right
                 fill( [fy{i,j},fy{i,j}(1)]/mmax*width+x(i),[fx{i,j},fx{i,j}(1)],'k','FaceColor',col{j},varargin{:});
             case 3 % left
@@ -132,4 +145,6 @@ end
 %% Return handle if necessary
 if nargout
     varargout{1} = gca;
+    varargout{2} = fx;
+    varargout{3} = fy;
 end
