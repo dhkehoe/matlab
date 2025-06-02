@@ -36,7 +36,7 @@ function varargout = hist2sq(x,y,z,varargin)
 
 % Ensure 'x', 'y', and 'z' are equally-sized matrices
 [b,s] = eqsize(x,y);
-if ~(b || eqsize(y,z))
+if ~(b && eqsize(y,z))
     error('''x'', ''y'', and ''z'' must be equally-sized matrices.');
 end
 if 2<numel(s)
