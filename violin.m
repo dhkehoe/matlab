@@ -88,7 +88,7 @@ if ~isempty(prec)
     kdearg = [kdearg, 'npoints', prec];
 end
 if ~isempty(bounds)
-    kdearg = [kdearg, 'bounds',bounds];
+    kdearg = [kdearg, 'bounds',bounds,'xl',bounds];
 end
 if ~isempty(domain)
     kdearg = [kdearg, 'domain',domain];
