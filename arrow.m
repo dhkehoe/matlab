@@ -98,7 +98,7 @@ end
 
 % Parse any optional arguments passed in
 try
-    typecheck = @(x) ischar(x) && any(strcmp(x,{'arrow','line','doublearrow','textarrow'}));
+    typecheck = @(x) ischar(x) && any(strcmpi(x,{'arrow','line','doublearrow','textarrow'}));
     [varargin,  fig] = inputChecker(varargin,'fig',      gcf, @isfigure, 'Optional argument ''Fig'' must be a handle to a figure object.');
     [varargin,   ax] = inputChecker(varargin,'axes',     gca, @isaxes,   'Optional argument ''Axes'' must be a handle to an axes object.');
     [varargin, type] = inputChecker(varargin,'type', 'arrow', typecheck, 'Optional argument ''Type'' must be one of the following strings: ''arrow'', ''line'', ''doublearrow'', or ''textarrow''.');
