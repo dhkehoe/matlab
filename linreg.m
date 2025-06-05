@@ -1,4 +1,4 @@
-function [r2,F,p,sse] = linreg(yhat,y,df)
+function [r2,F,p,df,sse] = linreg(yhat,y,df)
 yhat=yhat(:);
 y=y(:);
 
