@@ -1,19 +1,37 @@
 function [p,h] = disttest(x,y,varargin)
-if nargin > 1 && ischar(y), varargin = [y varargin]; clear y, 
-elseif nargin > 1 && isnumeric(y), y = y(:);
+% Computationally approximate the cutoffs of a joint probability density
+% function P(x,y). Specifically, for two random variables x and y, compute
+% the probability that 
+%   p = P(X<Y+mu)
+% and the null hypothesis that
+%   h = p < alpha
+%
+%
+%   DHK - July 10, 2024
+
+%% Process input
+if 1 < nargin
+    if ischar(y)
+        varargin = [y, varargin];
+        clear y;
+    elseif isnumeric(y)
+        y = y(:);
+        y(isnan(y)) = [];
+    end
 end
-ip = inputParser;
-addParameter(ip,'tail','both',@(x)any(strcmp(x,{'both','left','right'}))); % tail
-addParameter(ip,'null',0,@(x)numel(x)==1&&isnumeric(x)); % null hypothesis
-addParameter(ip,'alpha',.05,@(x)numel(x)==1&&isnumeric(x)); % TypeI confidence level
-parse(ip,varargin{:});
-ip = ip.Results;
 
 x = x(:);
 x(isnan(x)) = [];
+
+ip = inputParser;
+addParameter(ip,'tail','both',@(x)any(strcmpi(x,{'both','left','right'}))); % tail
+addParameter(ip,'null',     0,@(x)isscalar(x)&&isnumeric(x)); % null hypothesis
+addParameter(ip,'alpha',  .05,@(x)isscalar(x)&&isnumeric(x)); % TypeI confidence level
+parse(ip,varargin{:});
+ip = ip.Results;
+
+%% Compute test
 if exist('y','var')
-    y = y(:);
-    y(isnan(y)) = [];
     y = y-ip.null;
     z = nan(numel(x),2);
     for i = 1:numel(x)
@@ -22,11 +40,13 @@ if exist('y','var')
     end
     z = sum(z)/(numel(x)*numel(y));
 else
-    z = mean([x>ip.null x<ip.null]);
+    z = mean([ip.null<x x<ip.null]);
 end
 if strcmp(ip.tail,'both')
     p = min(z)*2;
 else
-    p = z(strcmp(ip.tail,{'left','right'}));
+    p = z(strcmpi(ip.tail,{'left','right'}));
 end
-if nargout==2, h = p<ip.alpha; end
+if nargout==2
+    h = p<ip.alpha;
+end
