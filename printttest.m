@@ -56,6 +56,13 @@ str = sprintf('t(%d) = %.2f, 95%%CI = [%.2f, %.2f], p %s, d = %.2f, MD = %.2f',.
 if p.print
     fprintf('%s\n',str);
 end
-if nargout
-    varargout{1} = str;
+switch nargout
+    case 4
+        varargout{4} = stats;
+    case 3
+        varargout{3} = ci;
+    case 2
+        varargout{2} = tp;
+    case 1
+        varargout{1} = str;
 end
