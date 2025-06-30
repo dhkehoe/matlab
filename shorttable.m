@@ -289,7 +289,7 @@ for i = 1:n % Step through x
     xi = x{i}; % Matlab, give us enumerators please
 
     % Convert table headers to logical indices
-    if ~isempty(header)
+    if ~isempty(header) && ( ischar(xi) || isstring(xi) )
         xi = strcmp(header,xi);
     end
 
