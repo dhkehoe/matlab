@@ -189,18 +189,21 @@ y = nan(sz); % Output matrix
 
 % Linearly step through 'y'
 for i = 1:numel(y)
-    idx = false(m(1),n); % Default this to true
+    idx = true(m(1),1); % Default this to true
 
     % Step through factors
     for j = 1:n
         % Index data where the j_th factor is equal to the k_th level, where k = ind(j)
-        idx(:,j) = data(:,h(j))==lvls{j}(ind(j));
+        idx = idx & data(:,h(j))==lvls{j}(ind(j));
     end
 
     % Apply the function '@fun' to the indexed data in the column specified
     % by 'col'
     if isa(fun,'function_handle')
-        y(i) = fun(data(all(idx,2),col));
+        % Protect against ~any(idx)==1, where isempty(data(idx,col))==1
+        if any(idx)
+            y(i) = fun(data(idx,col));
+        end % By default, if ~any(idx), then y(i) = nan
     elseif isnumeric(fun)
         % Or, if 'fun' is a numeric vector, compute the proportion of true
         % indices in this cell to the true indices across marginalized
