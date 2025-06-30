@@ -117,6 +117,7 @@ function y = shorttable(data,col,fun,varargin)
 % HISTORY
 %   11/02/2024 - written
 %   22/04/2025 - updated to accept table; updated/fixed documentation
+%   30/06/2025 - improved error handling/feedback
 
 %
 %   DHK - Feb. 11, 2024
@@ -125,60 +126,97 @@ function y = shorttable(data,col,fun,varargin)
 % Get the matrix size
 m = size(data);
 
-% Determine if input data is in table or matrix format
-tab = isa(data,'table');
-
 % Check that 'data' is either a 2D matrix or a table
-if ~( tab || isnumeric(data) && 2==numel(m) )
+if ~( isa(data,'table') || isnumeric(data) && 2==numel(m) )
     error('Argument ''data'' must be either a 2D matrix or a table.');
 end
 
 % Standardize the data format if a table was passed
-if tab
+if isa(data,'table')
     header = data.Properties.VariableNames; % Get the table header
     data = table2array(data); % Convert to a matrix
 else
     header = [];
 end
 
+%% Validate varargin arguments
+
+% Ensure any errors are thrown from shorttable()
+try
+    % Convert varagin (headers) to indices
+    h = index(varargin,m(2),header);
+    n = numel(h);
+
+    % Get the unique levels of each factor, validating as we go
+    lvls = cell(1,n);
+    for i = 1:n
+
+        % Check that the i_th factor can index some column of 'data'
+        if ~h(i)
+            error('');
+        end
+
+        % Get the unique levels, ignoring NaNs
+        lvls{i} = nanunique(data(:,h(i)));
+    end
+
+catch err
+    msg = sprintf([...
+        'Argument ''C%d'' is misformatted to index a column in ''data'' during function call\n',...
+        '\tshorttable(data,col,fun, C1,...,Cn)\n\n',...
+        'Use the following format for arguments C1,...,Cn:\n',...
+        '\t(1) When ''data'' is a table, ''Ci'' must be a case-sensitive string specifying a variable in the table.\n',...
+        '\t(2) When ''data'' is a matrix, ''Ci'' must be a numeric scalar or logical vector to index a column of ''data''.'...
+        ],i);
+    error(struct('identifier',err.identifier,'message',msg,'stack',err.stack(end)));
+end
+
+%% Validate 'col' argument
+
 % Check that 'col' can actually index some column of 'data', if using a
 % function to collapse the outcome variable 'col'
 if isa(fun,'function_handle')
-    col = index(col,m(2),header); % Convert to an index
 
-    % Check that there is a single index and it is valid (non-zero)
-    if ~( isscalar(col) && col )
-        error(sprintf([...
+    % Throw any errors from shorttable()
+    try
+        % Convert 'col' to an index
+        col = index(col,m(2),header);
+
+        % Check that there is a single index and it is valid (non-zero)
+        if ~( isscalar(col) && col )
+            error('');
+        end
+
+    catch err
+        % Create detailed error string
+        msg = sprintf([...
             'When argument ''fun'' is a function handle, argument ''col'' must be one of the following:\n',...
             '\t(1) When ''data'' is a table, ''col'' must be a case-sensitive string specifying a variable in the table.\n',...
             '\t(2) When ''data'' is a matrix, ''col'' must be a numeric (scalar) or logical (vector) columnar index of the matrix.'...
+            ]);
+        error(struct('identifier',err.identifier,'message',msg,'stack',err.stack(end)));
+    end
+
+elseif isnumeric(fun)
+    % Check that, alternatively, fun is a set of indices that correspond to factors in varargin
+    if any( isnan(fun) | isinf(fun) | fun<1 | n<fun )
+        error(sprintf(...
+            ['When ''fun'' is numeric, it must be one of the following:\n',...
+            '\t(1) An empty set, which specifies raw counts in each cell.\n',...
+            '\t(2) Numeric indices, which must be between (1,N), where N is the number of factors. ',...
+            'Numeric indices specify proportions in each cell, where each index specifies a factor to marginalize the proportions over.',...
             ]));
     end
-end
-
-% Get the number of factors
-n = numel(varargin);
-
-% Convert varargin to indices
-h = index(varargin,m(2),header);
-
-% Get the unique levels of each factor, validating as we go
-lvls = cell(1,n);
-for i = 1:n
-    % Check that the i_th factor can index some column of 'data'
-    if ~h(i)
-        error(sprintf([...
-            'Argument ''C%d'' is misformatted to index a column in ''data'' during function call\n',...
-            '\tshorttable(data,col,fun, C1,...,Cn)\n\n',...
-            'Use the following format for arguments C1,...,Cn:\n',...
-            '\t(1) When ''data'' is a table, ''Ci'' must be a case-sensitive string specifying a variable in the table.\n',...
-            '\t(2) When ''data'' is a matrix, ''Ci'' must be a numeric (scalar) or logical (vector) columnar index of the matrix.'...
-            ],i)); %#ok
-    end
-
-    % Get the unique levels
-    lvls{i} = unique(data(:,h(i)));
-    lvls{i}( isnan(lvls{i}) ) = []; % Trim out NaNs
+    fun = unique(fun);
+    
+else
+    % Otherwise, it's misspecified.
+    error(sprintf(...
+        ['Argument ''fun'' must be one of the following:\n',...
+        '\t(1) A function handle, which specifies how to collapse the data within each cell.\n',...
+        '\t(2) An empty set, which specifies raw counts in each cell.\n',...
+        '\t(3) Numeric indices, which specifies proportions in each cell where the indices specify which factors to marginalize the proportions over.',...
+        ]));
 end
 
 %% Compute subject table
@@ -189,12 +227,12 @@ y = nan(sz); % Output matrix
 
 % Linearly step through 'y'
 for i = 1:numel(y)
-    idx = true(m(1),1); % Default this to true
+    idx = false(m(1),n); % Default this to logical
 
     % Step through factors
     for j = 1:n
         % Index data where the j_th factor is equal to the k_th level, where k = ind(j)
-        idx = idx & data(:,h(j))==lvls{j}(ind(j));
+        idx(:,j) = data(:,h(j))==lvls{j}(ind(j));
     end
 
     % Apply the function '@fun' to the indexed data in the column specified
@@ -202,7 +240,7 @@ for i = 1:numel(y)
     if isa(fun,'function_handle')
         % Protect against ~any(idx)==1, where isempty(data(idx,col))==1
         if any(idx)
-            y(i) = fun(data(idx,col));
+            y(i) = fun(data(all(idx,2),col));
         end % By default, if ~any(idx), then y(i) = nan
     elseif isnumeric(fun)
         % Or, if 'fun' is a numeric vector, compute the proportion of true
@@ -215,9 +253,6 @@ for i = 1:numel(y)
         else
             y(i) = sum(all(idx,2)) / sum(all(idx(:,fun),2));
         end
-    else
-        % Otherwise, it's misspecified.
-        error('Argument ''fun'' must be either a function handle or numeric indices used to compute a proportion.');
     end
 
     % Increment the first factor
