@@ -20,8 +20,7 @@ function B = repmatr(A, M, varargin)
 %       1, 2, 3, 4;...  % row 1 repetition 2.5
 %  ]
 %
-% If size(A) .* M contains non-integers, these values are rounded and a
-% warning is raised.
+% If size(A) .* M contains non-integers, these values are rounded
 %
 %
 %   DHK - Oct. 10, 2023
@@ -55,15 +54,8 @@ end
 sizeA = size(A);
 sizeA = [sizeA, ones(1,numel(M)-numel(sizeA))];
 
-% Check the wholeness of the product of 
-%   (1) the size of the replicated matrix 'A' and 
-%   (2) the replication-size matrix 'M'
-N = sizeA.*M;
-if any(mod(N,1)) % Non-integers, give warning
-    warning('Product of replication size matrix and size of input matrix produces non-integers.');
-end
-
 % Build subscript reference
+N = sizeA .* M;
 S.type = '()';
 S.subs = cell(size(N));
 for i = 1:numel(N)
