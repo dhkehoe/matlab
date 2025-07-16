@@ -104,5 +104,5 @@ switch nargout
     case 1
         varargout = {p};
     case 2
-        varargout = {x,p};
+        varargout = {reshape(x,1,numel(x)),p};
 end
