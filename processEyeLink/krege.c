@@ -53,7 +53,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-#define uInt64      long long unsigned int
 #define DEFAULT_LS  100 // Default number of points for linspace
 #define NUM_BW      3   // Smoothing range in units of bandwidth
 
@@ -63,7 +62,7 @@
 // type double indexed-array
 typedef struct iarray
 {   
-    uInt64 index;
+    size_t index;
     double value;
 } iarray;
 
@@ -79,11 +78,11 @@ int comp(const void* ia, const void* ib)
 }
 
 // Custom implementation of qsort where just the sorted list of indices is returned
-uInt64* qsortIndex(const double arr[], uInt64 n)
+size_t* qsortIndex(const double arr[], size_t n)
 {
     // allocate indexed-array instance, then deep copy the input data array
     iarray* ia = malloc(n * sizeof(iarray));
-    for (uInt64 i = 0; i<n; i++)
+    for (size_t i = 0; i<n; i++)
     {
         ia[i].index = i;
         ia[i].value = arr[i];
@@ -93,8 +92,8 @@ uInt64* qsortIndex(const double arr[], uInt64 n)
     qsort(ia, n, sizeof(iarray), comp);
 
     // deep copy the sorted indices array
-    uInt64* idx = malloc(n * sizeof(uInt64)); 
-    for (uInt64 i = 0; i<n; i++)
+    size_t* idx = malloc(n * sizeof(size_t)); 
+    for (size_t i = 0; i<n; i++)
         idx[i] = ia[i].index;
 
     // release indexed-array
@@ -236,12 +235,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // SORT 'X' AND 'Y' AND REMOVE NANS/INFS
 
     // Get sorted indices of 'x'
-    uInt64* idx = qsortIndex(x, m);
+    size_t* idx = qsortIndex(x, m);
 
     // Create sorted copies of 'x' and 'y', skipping over any 'nan' values
     double* xs = malloc(m * sizeof(double));    // sorted x
     double* ys = malloc(m * sizeof(double));    // sorted y
-    uInt64 i = 0, ex = 0; // index, number of excluded indices
+    size_t i = 0, ex = 0; // index, number of excluded indices
     while (i<m) {
         if( isnan(x[idx[i+ex]]) || isinf(x[idx[i+ex]]) || isnan(y[idx[i+ex]]) || isinf(y[idx[i+ex]]) ) // bogus values found
         {
@@ -259,6 +258,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
     }
     free(idx);
+
+    // Verify that not all the data has been excluded
+    if(!i) {
+        free(xs);
+        free(ys);
+        mexErrMsgIdAndTxt("kreg:inputError","Insufficient valid data in 'x' and/or 'y'.");
+    };
 
     ///////////////////////////////////////////////////////////////////////
     // SET DEFAULT BANDWIDTH?
@@ -283,7 +289,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     ///////////////////////////////////////////////////////////////////////
     // REGRESSION ROUTINE
 
-    uInt64 lbIdx, ubIdx = 0;  // indices of 'xs' and 'ys' that correspond to mu +/- NUM_BW * bw
+    size_t lbIdx, ubIdx = 0;  // indices of 'xs' and 'ys' that correspond to mu +/- NUM_BW * bw
     double sigma = 2 * pow(bw, 2), // bandwidth converted to Gaussian sigma
     f,  // K(X_i-x_j)           --> kernel function (i,j): centered on X_i, weighting datum x_j
     xh, // sum( K(X_i-x_j )     --> " summed across j
@@ -292,7 +298,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     lbVal, ubVal; // lower/upper bound value of 'xs' and 'ys' for i_th kernel
     bool err = nlhs==2; // compute regression error? (Requires a second pass through the data, so avoid if possible)
 
-    for (uInt64 i = 0; i<n; i++) // step through domain
+    for (size_t i = 0; i<n; i++) // step through domain
     {
 
         // STEP 1: find lower/upper bounds for computational easing by
@@ -309,7 +315,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         
         // STEP 2: build kernels and weight outcome variable by kernels
         xh = 0, yh = 0, eh = 0; // reset sumation variables
-        for (uInt64 j=lbIdx; j<ubIdx; j++) // step through data
+        for (size_t j=lbIdx; j<ubIdx; j++) // step through data
         {
             f = exp( -pow( xs[j]-mu[i],2) / sigma ); // kernel weight this 'x' data
             xh += f;         // build x hat
@@ -323,7 +329,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         // STEP 3: compute regression error
         if (err)
         {
-            for (uInt64 j=lbIdx; j<ubIdx; j++) // step back through data
+            for (size_t j=lbIdx; j<ubIdx; j++) // step back through data
                 eh += pow(ys[j]-yhat[i],2);  // build e hat
 
             // avoid divide by zero errors
