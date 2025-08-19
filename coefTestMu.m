@@ -19,11 +19,21 @@ function [p,F,df,H,strs] = coefTestMu(model,h0)
 %   DHK - June 12, 2024
 
 if nargin<2
-    h0 = 0;
+    switch lower(model.Distribution)
+        case 'normal'
+            h0 = 0;
+        case 'binomial'
+            h0 = .5;
+        case 'poisson'
+            h0 = 0;
+    end
 end
 
 % Put this in the correct units
 h0 = model.Link.Link(h0);
+if isinf(h0)
+    error('Link-transformed null hypothesis ''h0'' is infinite.');
+end
 
 % Get the number of coefficients
 n = model.NumCoefficients;
