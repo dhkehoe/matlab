@@ -41,7 +41,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-#define uInt64  long long unsigned int
 #define pi      3.14159265358979323846264338327950288419716939937510
 #define numBW   3
 
@@ -96,8 +95,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     bool err = nlhs==2; // compute regression error?
 
     // Sort inputs
-    double* xs = malloc(m * sizeof(uInt64)); // sorted x
-    for (uInt64 i = 0; i<m; i++)
+    double* xs = malloc(m * sizeof(size_t)); // sorted x
+    for (size_t i = 0; i<m; i++)
         xs[i] = x[i]; // deep copy         
     qsort(xs, m, sizeof(double), comp);
     
@@ -105,7 +104,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     /////////////////////////////////
     // ROUTINE
     
-    uInt64 lbIdx, ubIdx = 0;
+    size_t lbIdx, ubIdx = 0;
     if (err) // start at beginning
     {
         // regression error is wildly underestimated if we
@@ -115,7 +114,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
 
     double xh, eh, lbVal, ubVal;
-    for (uInt64 i = 0; i<n; i++) // step through domain
+    for (size_t i = 0; i<n; i++) // step through domain
     {
 
         // STEP 1: find lower/upper bounds for computational easing by
@@ -135,7 +134,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
         // STEP 2: build kernels and weight outcome variable by kernels
         xh = 0, eh = 0; // reset counting variables
-        for (uInt64 j=lbIdx; j<ubIdx; j++) // step through data
+        for (size_t j=lbIdx; j<ubIdx; j++) // step through data
             xh += exp( -pow( xs[j]-mu[i],2) / sigma ); // kernel weight this 'x' data
         xh = xh / norm / m;
         yhat[i] = xh > 0 ? xh : 0;
@@ -143,7 +142,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         // STEP 3: compute regression error
         if (err)
         {
-            for (uInt64 j=lbIdx; j<ubIdx; j++) // step back through data
+            for (size_t j=lbIdx; j<ubIdx; j++) // step back through data
                 eh = eh + pow(xs[j]-yhat[i],2);  // build e hat
             ehat[i] = xh > 0 ? sqrt(eh/m) : 0;
         }
