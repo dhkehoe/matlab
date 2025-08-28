@@ -9,7 +9,7 @@ function [Y,x1,x2] = kreg2(d,varargin)
 %   [y,x1,x2] = kreg2(d,'OptionalArgName',OptionalArgValue,...);
 %
 % INPUT
-%   d - An Nx2 matrix, of any number of rows. Columns specify the
+%   d - An Nx3 matrix, of any number of rows. Columns specify the
 %       dimensions of the data. Observations are distributed across the
 %       rows.
 % 
@@ -80,13 +80,17 @@ end
 
 % Throw out non-numeric data
 d(any(isnan(d)|isinf(d),2),:) = [];
-y = d(:,3); d(:,3) = [];
-n = size(d);
 
 % Check we still have data left
 if isempty(d)
     error('Input ''d'' is empty after removing non-numeric data');
 end
+
+% Parse the outcome from the predictors
+y = d(:,3);
+d(:,3) = [];
+n = size(d);
+
 
 %% Parse optionals
 p = inputParser;
