@@ -27,18 +27,20 @@
 *                      spaced points between the min/max of the empirical
 *                      values in 'x' that constitute the x-domain. Values
 *                      of [], 0, Nan, or Inf, will be defaulted to d=100.
-*    double bw: The kernel bandwidth. Values of [], bw<0, Nan, or Inf will
-*               ne defaulted to the value computed using Silverman's rule
+*    double bw: The kernel bandwidth. Must be in the same units as 'x'. 
+*               Values of [], bw<0, Nan, or Inf will be defaulted to the
+*               value computed using Silverman's rule
 *               (see https://en.wikipedia.org/wiki/Kernel_density_estimation).
 *
 * OUTPUT:
-*   double xhat[]: The fitted regression function. Equal length to 'd'.
-*   double yhat[]: The fitted regression function. Equal length to 'd'.
-*   double ehat[]: The fitted regression function error. Equal length to 'd'.
-*       NOTE: If a single output is designated, the function returns 'yhat'.
+*   double xhat[]: The domain of the regression function.
+*   double yhat[]: The fitted regression function.
+*   double ehat[]: The standard error of the fitted regression function error.
+*       NOTE: (1) All outputs have an equal length to 'd'. 
+*             (2) If a single output is designated, the function returns 'yhat',
 *                   e.g., scatter(x,y); hold on; plot(d,krege(x,y,d));
-*             If 2 or 3 outputs are designated, the function returns them
-*             in the order 'xhat', 'yhat', 'ehat'.
+*                 If 2 or 3 outputs are designated, the function returns
+*                 them in the order 'xhat', 'yhat', 'ehat'.
 *
 * EXCEPTIONS:
 *   1) Greater than 3 values were returned.
@@ -78,19 +80,8 @@
 *                           -return values optional + flexibly ordered
 *   dhk     nov 29, 2025    -adopted OpenMP for parallelization (x5 speed-up)
 *
-* NOTES:
-*   (nov 29, 2025):
-*       With the adoption of multithreading, it nows runs blazingly fast. 
-*       Quick testing shows it performs sub 1 GHz per datum:
-*           t = N * M * 5e-10
-*       where N = numel(x) is the number of 'x' data and M = numel(d) is
-*       the number of domain values. For perspective, that's smoothing 50
-*       seconds worth of a 2 kHz time series in 5 seconds. That's assuming
-*       a reasonable bandwidth.
 *
 * DO TO:
-*   1) A user-beware-of-danger flag to turn off the safeguards and skip all
-*      the sorting and integreity checks.
 *
 **************************************************************************/
 
