@@ -108,6 +108,8 @@ function eye = processEye(file,varargin)
 %                             greatly improved detection performance
 %   (modified) Aug.  7, 2023: Replaced 'kreg' and 'smooth' functions with 
 %                             the 'krege' .mex function. Minor other tweaks
+%   (modified) Dec.  2, 2025: Replaced 'krege.mex' with the vastly improved 
+%                             'kregt.mex' (x40 speed-up).
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -301,12 +303,12 @@ for i = 1:numel(trials)
 
     % Smooth time series data
     if p.gazeBW % Smooth gaze position
-        eye(i).x = krege( eye(i).t, eye(i).x, eye(i).t, p.gazeBW );
-        eye(i).y = krege( eye(i).t, eye(i).y, eye(i).t, p.gazeBW );
+        eye(i).x = kregt( eye(i).t, eye(i).x, p.gazeBW );
+        eye(i).y = kregt( eye(i).t, eye(i).y, p.gazeBW );
     end
 
     if p.pupilBW % Smooth pupil size
-        eye(i).p = krege( eye(i).t, eye(i).p, eye(i).t, p.pupilBW );
+        eye(i).p = kregt( eye(i).t, eye(i).p, p.pupilBW );
     end
 
     % Find true start/end of blinks
