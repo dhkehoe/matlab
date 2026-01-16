@@ -144,21 +144,21 @@ p = inputParser;
 % Screen options
 addOptional(p,'screenResolution',[2560,1440],@(x)isnumeric(x)&&numel(x)==2); % Screen [width,height] in pixels
 addOptional(p,'screenSize',[60.9,34.3],@(x)isnumeric(x)&&numel(x)==2); % Screen [width,height] in cm
-addOptional(p,'screenDistance',74,@(x)isnumeric(x)&&numel(x)==1); % Viewing distance (default = 57 cm)
+addOptional(p,'screenDistance',74,@(x)isnumeric(x)&&isscalar(x)); % Viewing distance (default = 57 cm)
 
 % Smoothing options
-addOptional(p,'pupilBW',.01,@(x)isnumeric(x)&&numel(x)==1); % Smoothing bandwidth for pupil data
-addOptional(p,'gazeBW',.001,@(x)isnumeric(x)&&numel(x)==1); % Smoothing bandwidth for gaze data
+addOptional(p,'pupilBW',.01,@(x)isnumeric(x)&&isscalar(x)); % Smoothing bandwidth for pupil data
+addOptional(p,'gazeBW',.001,@(x)isnumeric(x)&&isscalar(x)); % Smoothing bandwidth for gaze data
 
 % Saccade detection options
-addOptional(p,'sampRate',.0005,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'minVel',20,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'minDur',.01,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'minAmp',1,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'minPeakVel',50,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'maxPeakVel',1500,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'minPeakAcc',6000,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'maxTheta',pi/2,@(x)isnumeric(x)&&numel(x)==1);
+addOptional(p,'sampRate',[],@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'minVel',20,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'minDur',.01,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'minAmp',1,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'minPeakVel',50,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'maxPeakVel',1500,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'minPeakAcc',6000,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'maxTheta',pi/2,@(x)isnumeric(x)&&isscalar(x));
 
 % Parse
 parse(p,varargin{:});
@@ -237,31 +237,37 @@ flags = (...
 getTimeIndex = @(t,idx) find( min(abs(t-idx))==abs(t-idx) );
 
 %% Specify column headers for data preprocessing
-h.eye = [1,12,14,16]; % [timetag, eye_x, eye_y, pupil_diameter] columns in Eyelink('GetQueuedData')
-h.t = 1; % timetag        (eyedata)
-h.p = 2; % eye x position (eyedata)
-h.x = 3; % eye y position (eyedata)
-h.y = 4; % pupil diameter (eyedata)
 
-h.trialstart    = 1;  % trial start       (flags)
-h.trialstop     = 2;  % trial end         (flags)
-h.ITIstart      = 3;  % ITI start         (flags)
-h.ITIend        = 4;  % ITI end           (flags)
-h.fixOn         = 5;  % fixation onset    (flags)
-h.fixAcq        = 6;  % fixation acquired (flags)
-h.fixOff        = 7;  % fixation offset   (flags)
-h.targOn        = 8;  % target onset      (flags)
-h.targAcq       = 9;  % target acquired   (flags)
-h.targOff       = 10; % target offset     (flags)
-h.trialFeedback = 11; % trial feedback    (flags)
-h.totalFeedback = 12; % task feedback     (flags)
+% Define relevant columns in Eyelink('GetQueuedData')
+h.eye = [1,12,14,16]; % [timetag, gaze_x, gaze_y, pupil_diameter]
 
-h.blink         = -1; % Oculomotor behavior code
-h.fixation      =  0; % Oculomotor behavior code
-h.fixationDrift =  1; % Oculomotor behavior code (NOT IMPLEMENTED)
-h.microsaccade  =  2; % Oculomotor behavior code
-h.pursuit       =  3; % Oculomotor behavior code (NOT IMPLEMENTED)
-h.saccade       =  4; % Oculomotor behavior code
+% Define columns in 'eyedata'
+h.t = 1; % timetag        
+h.p = 2; % eye x position
+h.x = 3; % eye y position
+h.y = 4; % pupil diameter
+
+% Define event flags
+h.trialstart    = 1;  % trial start
+h.trialstop     = 2;  % trial end
+h.ITIstart      = 3;  % ITI start
+h.ITIend        = 4;  % ITI end
+h.fixOn         = 5;  % fixation onset
+h.fixAcq        = 6;  % fixation acquired
+h.fixOff        = 7;  % fixation offset
+h.targOn        = 8;  % target onset
+h.targAcq       = 9;  % target acquired
+h.targOff       = 10; % target offset
+h.trialFeedback = 11; % trial feedback
+h.totalFeedback = 12; % task feedback
+
+% Define oculomotor behavior codes
+h.blink         = -1;
+h.fixation      =  0;
+h.fixationDrift =  1; % NOT YET IMPLEMENTED
+h.microsaccade  =  2;
+h.pursuit       =  3; % NOT YET IMPLEMENTED
+h.saccade       =  4;
 
 %% Process each trial
 for i = 1:numel(trials)
@@ -309,6 +315,11 @@ for i = 1:numel(trials)
 
     if p.pupilBW % Smooth pupil size
         eye(i).p = kregt( eye(i).t, eye(i).p, p.pupilBW );
+    end
+
+    % Default sample rate?
+    if isempty(p.sampRate)
+        p.sampRate = round(diff(eye(1).t(1:2)),4);
     end
 
     % Find true start/end of blinks

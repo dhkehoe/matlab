@@ -72,14 +72,14 @@ function sacs = saccades(x,y,varargin)
 
 %% Manage inputs
 p = inputParser;
-addOptional(p,'sampRate',.0005,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'minVel',20,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'minDur',.01,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'minAmp',1,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'minPeakVel',50,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'maxPeakVel',1500,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'minPeakAcc',6000,@(x)isnumeric(x)&&numel(x)==1);
-addOptional(p,'maxTheta',pi/2,@(x)isnumeric(x)&&numel(x)==1);
+addOptional(p,'sampRate',.0005,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'minVel',20,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'minDur',.01,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'minAmp',1,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'minPeakVel',50,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'maxPeakVel',1500,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'minPeakAcc',6000,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'maxTheta',pi/2,@(x)isnumeric(x)&&isscalar(x));
 parse(p,varargin{:});
 p = p.Results;
 
