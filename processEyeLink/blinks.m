@@ -65,11 +65,11 @@ function [b, eye] = blinks(x,varargin)
 
 %% Manage input
 p = inputParser;
-addOptional(p,'sampRate',.0005,@(x)isnumeric(x)&&numel(x)==1); % 2 kHz sampling rate
-addOptional(p,'minDur',.1,@(x)isnumeric(x)&&numel(x)==1); % ensure blinks are at least 100 ms in duration
-addOptional(p,'pool',.1,@(x)isnumeric(x)&&numel(x)==1); % pool blinks separately by less than 100 ms
-addOptional(p,'xThres',100,@(x)isnumeric(x)&&numel(x)==1); % threshold: 100 pixel pupil area
-addOptional(p,'dxThres',1e3,@(x)isnumeric(x)&&numel(x)==1); % threshold: 1000 pixels/second pupil area change
+addOptional(p,'sampRate',.0005,@(x)isnumeric(x)&&isscalar(x)); % 2 kHz sampling rate
+addOptional(p,'minDur',.1,@(x)isnumeric(x)&&isscalar(x)); % ensure blinks are at least 100 ms in duration
+addOptional(p,'pool',.1,@(x)isnumeric(x)&&isscalar(x)); % pool blinks separately by less than 100 ms
+addOptional(p,'xThres',100,@(x)isnumeric(x)&&isscalar(x)); % threshold: 100 pixel pupil area
+addOptional(p,'dxThres',1e3,@(x)isnumeric(x)&&isscalar(x)); % threshold: 1000 pixels/second pupil area change
 
 parse(p,varargin{:});
 p = p.Results;

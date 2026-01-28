@@ -150,7 +150,7 @@ addOptional(p,'screenDistance',74,@(x)isnumeric(x)&&isscalar(x)); % Viewing dist
 addOptional(p,'pupilBW',.01,@(x)isnumeric(x)&&isscalar(x)); % Smoothing bandwidth for pupil data
 addOptional(p,'gazeBW',.001,@(x)isnumeric(x)&&isscalar(x)); % Smoothing bandwidth for gaze data
 
-% Saccade detection options
+% Saccade detection options (see saccades.m)
 addOptional(p,'sampRate',[],@(x)isnumeric(x)&&isscalar(x));
 addOptional(p,'minVel',20,@(x)isnumeric(x)&&isscalar(x));
 addOptional(p,'minDur',.01,@(x)isnumeric(x)&&isscalar(x));
@@ -159,6 +159,12 @@ addOptional(p,'minPeakVel',50,@(x)isnumeric(x)&&isscalar(x));
 addOptional(p,'maxPeakVel',1500,@(x)isnumeric(x)&&isscalar(x));
 addOptional(p,'minPeakAcc',6000,@(x)isnumeric(x)&&isscalar(x));
 addOptional(p,'maxTheta',pi/2,@(x)isnumeric(x)&&isscalar(x));
+
+% Blink detection options (see blinks.m)
+addOptional(p,'blinkMinDur',.1,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'blinkPool',.1,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'blinkXThres',100,@(x)isnumeric(x)&&isscalar(x));
+addOptional(p,'blinkDXThres',1e3,@(x)isnumeric(x)&&isscalar(x));
 
 % Parse
 parse(p,varargin{:});
@@ -323,8 +329,14 @@ for i = 1:numel(trials)
     end
 
     % Find true start/end of blinks
-    [b, eye(i).b] = blinks(eye(i).p,'sampRate',p.sampRate);
+    [b, eye(i).b] = blinks(eye(i).p,'sampRate',p.sampRate,...
+        'minDur',p.blinkMinDur,...
+        'pool',p.blinkPool,...
+        'xThres',p.blinkXThres,...
+        'dxThres',p.blinkDXThres);
     eye(i).e(b) = h.blink; % Set blinks
+
+    
 
     % Update metrics to discard blink samples
     eye(i).p(b) = nan;
