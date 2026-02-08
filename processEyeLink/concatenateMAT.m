@@ -1,4 +1,24 @@
 function varargout = concatenateMAT(d,overwrite)
+% Concatenate data files for an experimental session within the RIGBOX
+% ecosystem. 'd' is a file path for the parent folder of the experimental
+% session. Within the RIGBOX ecosystem, 'd' contains 1 or more
+% subdirectories that each correspond to a run of the experiment. Each
+% subdirectory contains .mat files that each correspond to the data for an
+% individual trial. This function concatenates all such trial-level data
+% into an array of structs. The optional argument 'overwrite', when true
+% (default), will reconcatenate the data and it save to disk, overwriting
+% any existing concatenated data file. When false, this function will
+% attempt to load the contents of an existing concatenated data file and
+% return those contents. If the file is empty or no such file exists, it
+% will automatically perform the concatenation.
+%
+% USAGE
+%   trials = concatenateMAT(d);
+%   trials = concatenateMAT(d,false);
+%   concatenateMAT(d,false);
+%
+%
+%   DHK - Feb. 8, 2026
 
 % Verify this is a valid file path
 if ~isfolder(d)
@@ -64,15 +84,20 @@ v = whos('-file',f(1,:)).name;
 
 % Preallocate the struct
 load(f(1,:),v);
-s = repmat(eval(v),size(f,1),1);
+x = repmat(eval(v),size(f,1),1);
 
 % Fill the struct
 for i = 2:size(f,1)
     load(f(i,:),v);
-    s(i) = eval(v);
+    x(i) = eval(v);
 end
 
-% Return the struct
+% Save the concatenated struct array
+if overwrite
+    save([d,filesep,s,'.mat'],x);
+end
+
+% Return the struct array
 if nargout
-    varargout{1} = s;
+    varargout{1} = x;
 end
