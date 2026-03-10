@@ -100,9 +100,8 @@ if t < 4 % PDF, probability, and CDF require normalization
 end
 
 %% Output
-switch nargout
-    case 1
-        varargout = {p};
-    case 2
-        varargout = {reshape(x,1,numel(x)),p};
+if nargout == 2
+    varargout = {reshape(x,1,numel(x)),p};
+else
+    varargout = {p};
 end
