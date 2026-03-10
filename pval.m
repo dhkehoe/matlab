@@ -1,5 +1,19 @@
 function s = pval(p,type)
-if nargin < 2, type = 1; end
+if nargin < 2
+    type = 1;
+end
+
+if isscalar(p)
+    s = pval_(p,type);
+else
+    s = cell(size(p));
+    for i = 1:numel(p)
+        s{i} = pval_(p(i),type);
+    end
+end
+
+%%
+function s = pval_(p,type)
 if type == 1
     if p < .001, s = '< .001';
     elseif p < 1
