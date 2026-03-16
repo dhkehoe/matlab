@@ -90,7 +90,7 @@ for k = i:length(x)
             seqs = sequence_r(x,k+1,n,len); % Elements in 'x' left to search; step back in
         end
         if n % If there are any sequences
-            adj = seq >= len && k==length(x); % True IF: we're at the end of 'x' and this 'k' is part of the sequence
+            adj = seq >= len && k==length(x) && x(k); % True IF: we're at the end of 'x' and this 'k' is part of the sequence
             seqs(n,:) = [k-seq+adj,k-1+adj,seq]; % Fill in this step
         end
         return;
@@ -117,7 +117,7 @@ for i = 1:numel(x)
             n = n-1; % Decrement
         else
             % Valid sequence; get start/end elements and range
-            seqs(n,:) = [i-0-seq,i-1,seq];
+            seqs(n,:) = [i-seq,i-1,seq];
         end
         seq = 0; % Reset counter
     end
