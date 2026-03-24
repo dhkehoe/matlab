@@ -129,6 +129,4 @@ for i = 1:n
     % Temporal metrics
     sqz(i).latency     = sqz(i).bins(1) * p.sampRate;
     sqz(i).duration    = s(i,3) * p.sampRate;
-
-    if sqz(i).peakVel<0, keyboard; end
 end
