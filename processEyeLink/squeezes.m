@@ -7,8 +7,8 @@ function sqz = squeezes(x,varargin)
 %
 %
 % USAGE
-%   sqz = blinks(x);
-%   sqz = blinks(x,'OptionalArgName',OptionalArgVal, ... );
+%   sqz = squeezes(x);
+%   sqz = squeezes(x,'OptionalArgName',OptionalArgVal, ... );
 %
 %
 % INPUT
@@ -85,7 +85,7 @@ x = x(:)-x(1); % Zero out force
 t = 1:numel(x);
 
 % Compute the time derivative
-dx = reshape( krege(t, [0;diff(x)]/p.sampRate, t, p.bw), [],1);
+dx = reshape( kregt(t, [0;diff(x)]/p.sampRate, p.bw), [],1);
 
 % Find sequences where  (derivative > time_thres) OR (force > force_thres)
 % ...AND the signal is above zero (weird edge case...)
