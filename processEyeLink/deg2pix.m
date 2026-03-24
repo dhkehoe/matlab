@@ -26,8 +26,8 @@ end
 p = inputParser;
 addOptional(p,'screenResolution',[2560,1440],@(x)isnumeric(x)&&numel(x)==2); % Screen [width,height] in pixels
 addOptional(p,'screenSize',[60.9,34.3],@(x)isnumeric(x)&&numel(x)==2); % Screen [width,height] in cm
-addOptional(p,'screenDistance',74,@(x)isnumeric(x)&&numel(x)==1); % Viewing distance (default = 74 cm)
-addOptional(p,'cart2rect',1,@(x)numel(x)==1&&islogical(logical(x))); % Convert from Cartesian into PTB 'rect'?
+addOptional(p,'screenDistance',74,@(x)isnumeric(x)&&isscalar(x)); % Viewing distance (default = 74 cm)
+addOptional(p,'cart2rect',1,@(x)isscalar(x)&&islogical(logical(x))); % Convert from Cartesian into PTB 'rect'?
 parse(p,varargin{:});
 p = p.Results;
 

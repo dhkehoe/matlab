@@ -45,8 +45,8 @@ function [ex,ey,varargout] = confEllipse(x,y,varargin)
 
 %% manage input
 ip = inputParser; % parse optional arguments
-addOptional(ip,'ci',.95,@(x)numel(x)==1&&isnumeric(x)); % confidence level of ellipse
-addOptional(ip,'npoints',100,@(x)numel(x)==1&&isnumeric(x)); % number of points to draw ellipse with
+addOptional(ip,'ci',.95,@(x)isscalar(x)&&isnumeric(x)); % confidence level of ellipse
+addOptional(ip,'npoints',100,@(x)isscalar(x)&&isnumeric(x)); % number of points to draw ellipse with
 parse(ip,varargin{:});
 ip = ip.Results;
 if 0>=ip.ci || ip.ci>=1, error('bad confidence level. ''ci'' must be in the interval 0<ci<1 '), end
