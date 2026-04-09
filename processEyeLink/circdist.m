@@ -3,24 +3,16 @@ function dist = circdist(a1,a2,rad)
 % distance is bounded on [0,pi]. Optional argument 'rad' to specify whether
 % the angles are in radians (true | default) or in degrees (false).
 
-% Set units
-if nargin<3 || rad
-    c = 2*pi; % Default to radians
+% Default to radians
+if nargin<3 || isempty(rad) || rad
+    c = 2*pi;
 else
     c = 360;
 end
 
-% Get the shape of the matrix
-s = size(a1);
-
-% Vectorize
-a1 = a1(:);
-a2 = a2(:);
-
-% Ensure equal number of elements
-if numel(a1)~=numel(a2)
-    error('Dimension mismatch between inputs ''a1'' and ''a2''.');
-end
-
 % Compute the circular distances
-dist = reshape( min([mod(a1-a2,c),mod(a2-a1,c)],[],2), s);
+try
+    dist = min(mod(a1-a2,c),mod(a2-a1,c));
+catch err % Probably a size mismatch, catch and rethrow from here
+    error(struct('identifier',err.identifier,'message',err.message,'stack',err.stack(end)));
+end
