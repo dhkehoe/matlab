@@ -142,7 +142,7 @@ if isempty(p.bw)
         case 3 % (Von Mises) Reciprocal of Silverman's rule-of-thumb
             p.bw = 1./((4/(n(2)+2))^(1/(n(2)+4)) .* n(1)^(-1/(n(2)+4)) .* std(d));
     end
-elseif numel(p.bw)==1 % Use same bandwidth in both dimensions
+elseif isscalar(p.bw) % Use same bandwidth in both dimensions
     p.bw = [p.bw,p.bw];
 elseif numel(p.bw)>2 % Wrong number of bandwidths provided
     error('Optional argument ''bw'' must contain either 1 or 2 elements');
@@ -176,7 +176,7 @@ if isempty(p.domain)
     end
 
     % 'npoints' supercedes 'scale'
-    if ~isempty(p.scale) || ~isempty(p.npoints)
+    if ~isempty(p.scale) && ~isempty(p.npoints)
         warning('Optional argument ''npoints'' was provided, so optional argument ''scale'' is ignored.');
     end
 
@@ -184,7 +184,7 @@ if isempty(p.domain)
     if isempty(p.npoints) && ~isempty(p.scale)
 
         % Ensure integrity
-        if numel(p.scale)==1 % Repeat scale
+        if isscalar(p.scale) % Repeat scale
             p.scale = [p.scale,p.scale];
         elseif numel(p.scale)>2 % Wrong number of scale factors provided
             error('Optional argument ''scale'' must contain either 1 or 2 elements');
@@ -200,7 +200,7 @@ if isempty(p.domain)
         % Ensure npoints
         if isempty(p.npoints)
             p.npoints = [100,100];
-        elseif numel(p.npoints)==1 % Repeat npoints
+        elseif isscalar(p.npoints) % Repeat npoints
             p.npoints = [p.npoints,p.npoints];
         elseif numel(p.npoints)>2 % Wrong number of 'npoints' provided
             error('Optional argument ''npoints'' must contain either 1 or 2 elements');
