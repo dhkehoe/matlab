@@ -48,7 +48,7 @@ end
 if isempty(p.bw)
     switch kernel
         case 1 % Gaussian kernel
-            p.bw = .9*min([std(d) iqr(d)/1.34])*numel(d)^(-1/5);
+            p.bw = .9*min(std(d), iqr(d)/1.34)*numel(d)^(-1/5);
         case 2 % Rectangular kernel
             p.bw = std(d);
         case 3 % Exponential decay kernel
@@ -64,6 +64,9 @@ end
 if isempty(p.domain) % Domain was not provided
     if isempty(p.xl)
         p.xl = [min(d),max(d)]+[-1,1]*p.bw*2;
+        if ~isempty(p.bounds)
+            p.xl = [max(p.xl(1), p.bounds(1)), min(p.xl(2), p.bounds(2))];
+        end
     end
     if ~isempty(p.scale)
         p.domain = p.xl(1) : p.scale : p.xl(2); % Define domain of x
@@ -132,3 +135,4 @@ end
 
 function y = iqr(x)
 y = diff(prctile(x, [25, 75]));
+y(y==0) = nan;
