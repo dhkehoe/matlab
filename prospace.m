@@ -22,7 +22,7 @@ end
 if nargin<3 || isempty(n)
     n = 100;
 end
-if ~all([isscalar(lb),isscalar(ub),isscalar(n),isscalar(mu),isscalar(sigma),isscalar(d)])
+if ~all([isscalar(lb),isscalar(ub),isscalar(n),isscalar(mu),isscalar(sigma)])
     error('Inputs must be scalars.');
 end
 if mod(n,1) || n<1
