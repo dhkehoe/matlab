@@ -13,9 +13,6 @@ function x = prospace(lb,ub,n,mu,sigma)
 %               Default = 1
 
 %% Data hygiene
-if nargin<6 || isempty(d)
-    d = .01;
-end
 if nargin<5 || isempty(sigma)
     sigma = 1;
 end
@@ -30,9 +27,6 @@ if ~all([isscalar(lb),isscalar(ub),isscalar(n),isscalar(mu),isscalar(sigma),issc
 end
 if mod(n,1) || n<1
     error('Number of data points must be a positive integer.');
-end
-if d<=0 || 1<=d
-    error('Argument ''d'' specifies the inner bounds of the probit-domain such that the domain is (d,1-d). ''d'' must therefore be within the interval (0,1).');
 end
 
 %% Compute the probit-spaced vector
