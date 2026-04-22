@@ -61,12 +61,17 @@ function stats = emmix(x,n,dist,varargin)
 %                        matrix, where N is the number of components, and M
 %                        is the number of parameters for each component.
 %                        The Mth component is always the mixture weight.
-%                        The remaining parameters are arranged in the order
-%                        specified by the relevant PDF function in the
-%                        Statistics and Machine Learning toolbox. For
-%                        example, when fitting 'norm' mixtures, the 1 : M-1
-%                        components are [mu; sigma], as specified by
-%                        normpdf().
+%                        The remaining parameters are arranged along the
+%                        rows in the order specified by the relevant PDF
+%                        function in the Statistics and Machine Learning 
+%                        toolbox. For example, when fitting 'norm'
+%                        mixtures, the (1 : M-1) parameters are 
+%                           [mu; sigma], 
+%                        as specified by normpdf(x,mu,sigma). Additionally,
+%                        along the columns, the components are sorted from
+%                        greatest-to-least, according to the mixture
+%                        weights. That is,
+%                           params(M,1) >= params(M,2) >= ... >= params(M,N)
 %
 %               labels - A vector of class labels, with the same number of
 %                        elements as input data 'x'. All labels are 
@@ -250,6 +255,10 @@ end
 
 % Reset seed value
 rng(origSeed);
+
+% Rank the components from highest to lowest
+i = tiedrank(-stats.params(end,:));
+stats.params = stats.params(:,i);
 
 
 %% Utilities
