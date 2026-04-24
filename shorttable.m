@@ -168,7 +168,7 @@ catch err
         '\t(1) When ''data'' is a table, ''Ci'' must be a case-sensitive string specifying a variable in the table.\n',...
         '\t(2) When ''data'' is a matrix, ''Ci'' must be a numeric scalar or logical vector to index a column of ''data''.'...
         ],i);
-    error(struct('identifier',err.identifier,'message',msg,'stack',err.stack(end)));
+    throwAsCaller(MException(err.identifier,msg));
 end
 
 %% Validate 'col' argument
@@ -193,41 +193,41 @@ if isa(fun,'function_handle')
             '\t(1) When ''data'' is a table, ''col'' must be a case-sensitive string specifying a variable in the table.\n',...
             '\t(2) When ''data'' is a matrix, ''col'' must be a numeric (scalar) or logical (vector) columnar index of the matrix.'...
             ]);
-        error(struct('identifier',err.identifier,'message',msg,'stack',err.stack(end)));
+        throwAsCaller(MException(err.identifier,msg));
     end
 
     % Ensure that @fun exists
     try
         fun([1;1]);
     catch err
-        error(struct('identifier',err.identifier,'message',sprintf('Unrecognized function ''%s''.',char(fun)),'stack',err.stack(end)));
+        throwAsCaller(MException(err.identifier,sprintf('Unrecognized function ''%s''.',char(fun))));
     end
 
     % Ensure that fun cannot return empty or non-scalars
     if ~isscalar(fun([1;1])) || isempty(fun([1;1]))
-        error('Invalid function ''%s'' passed as argument ''fun''. This function must accept vector inputs and return numeric, scalar values.',char(fun));
+        throwAsCaller(MException('MATLAB:illegalFunction','Invalid function ''%s'' passed as argument ''fun''. This function must accept vector inputs and return numeric, scalar values.',char(fun)));
     end
 
 elseif isnumeric(fun)
     % Check that, alternatively, fun is a set of indices that correspond to factors in varargin
     if any( isnan(fun) | isinf(fun) | fun<1 | n<fun )
-        error(sprintf(...
+        throwAsCaller(MException('MATLAB:illegalFunction',sprintf(...
             ['When ''fun'' is numeric, it must be one of the following:\n',...
             '\t(1) An empty set, which specifies raw counts in each cell.\n',...
             '\t(2) Numeric indices, which must be between (1,N), where N is the number of factors. ',...
             'Numeric indices specify proportions in each cell, where each index specifies a factor to marginalize the proportions over.',...
-            ]));
+            ])));
     end
     fun = unique(fun);
     
 else
     % Otherwise, it's misspecified.
-    error(sprintf(...
+    throwAsCaller(MException('MATLAB:illegalFunction',sprintf(...
         ['Argument ''fun'' must be one of the following:\n',...
         '\t(1) A function handle, which specifies how to collapse the data within each cell.\n',...
         '\t(2) An empty set, which specifies raw counts in each cell.\n',...
         '\t(3) Numeric indices, which specifies proportions in each cell where the indices specify which factors to marginalize the proportions over.',...
-        ]));
+        ])));
 end
 
 %% Compute subject table
