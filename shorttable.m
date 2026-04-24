@@ -186,7 +186,6 @@ if isa(fun,'function_handle')
         if ~( isscalar(col) && col )
             error('');
         end
-
     catch err
         % Create detailed error string
         msg = sprintf([...
@@ -195,6 +194,18 @@ if isa(fun,'function_handle')
             '\t(2) When ''data'' is a matrix, ''col'' must be a numeric (scalar) or logical (vector) columnar index of the matrix.'...
             ]);
         error(struct('identifier',err.identifier,'message',msg,'stack',err.stack(end)));
+    end
+
+    % Ensure that @fun exists
+    try
+        fun([1;1]);
+    catch err
+        error(struct('identifier',err.identifier,'message',sprintf('Unrecognized function ''%s''.',char(fun)),'stack',err.stack(end)));
+    end
+
+    % Ensure that fun cannot return empty or non-scalars
+    if ~isscalar(fun([1;1])) || isempty(fun([1;1]))
+        error('Invalid function ''%s'' passed as argument ''fun''. This function must accept vector inputs and return numeric, scalar values.',char(fun));
     end
 
 elseif isnumeric(fun)
@@ -235,23 +246,26 @@ for i = 1:numel(y)
         idx(:,j) = data(:,h(j))==lvls{j}(ind(j));
     end
 
+    % Find the intersection of each level of each condition
+    k = all(idx,2);
+
     % Apply the function '@fun' to the indexed data in the column specified
     % by 'col'
     if isa(fun,'function_handle')
         % Protect against ~any(idx)==1, where isempty(data(idx,col))==1
-        if any(idx)
-            y(i) = fun(data(all(idx,2),col));
+        if any(k)
+            y(i) = fun(data(k,col));
         end % By default, if ~any(idx), then y(i) = nan
     elseif isnumeric(fun)
         % Or, if 'fun' is a numeric vector, compute the proportion of true
         % indices in this cell to the true indices across marginalized
         % cells specified by factors 'fun'.
         if isempty(fun)
-            y(i) = sum(all(idx,2));
+            y(i) = sum(k);
         elseif numel(fun)==n
-            y(i) = sum(all(idx,2)) / m(1);
+            y(i) = sum(k) / m(1);
         else
-            y(i) = sum(all(idx,2)) / sum(all(idx(:,fun),2));
+            y(i) = sum(k) / sum(all(idx(:,fun),2));
         end
     end
 
@@ -271,7 +285,7 @@ for i = 1:numel(y)
     end
 end
 
-%% Utility
+%% Utilities
 function idx = index(x,m,header)
 % Convert various indices to a common format (numeric indices)
 
