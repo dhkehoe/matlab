@@ -10,6 +10,19 @@ function [varg, val] = inputChecker(varg,vstr,dval,efun,estr)
 % a handle to an inline function that returns true when the value is
 % acceptable. If the value is not acceptable according to 'efun', an error
 % is throw. The error string is 'estr'.
+
+%% Set defaults
+if nargin<5 || isempty(estr)
+    estr = '';
+end
+if nargin<4 || isempty(efun)
+    efun = @(x)true;
+end
+if nargin<3
+    dval = [];
+end
+
+%% Routine
 val = dval;
 for i = 1:numel(varg)
     if i<numel(varg) && ischar(varg{i}) && strcmpi(varg{i},vstr)
