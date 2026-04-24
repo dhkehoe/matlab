@@ -14,7 +14,6 @@ end
 
 %% Retrieve optional arguments that cannot be passed to plot()
 try
-    % keyboard
     % Parse varargin for anything that won't be accepted by plot()
     [varargin,  fa ] = inputChecker(varargin,'FaceAlpha',         .1 );
     [varargin,  fc ] = inputChecker(varargin,'FaceColor',         [] );
