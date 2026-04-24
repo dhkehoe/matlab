@@ -86,7 +86,7 @@ try
     % Get a handle for replicating the plot format
 
 catch err
-    error(struct('identifier',err.identifier,'message',err.message,'stack',err.stack(end)));
+    throwAsCaller(err);
 end
 
 % Convert 'type' to an integer

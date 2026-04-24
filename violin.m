@@ -135,7 +135,7 @@ try
     [varargin,cutoff] = inputChecker(varargin,'cutoff',[0,1], @(x)isnumeric(x)&&numel(x)==2&&issorted(x)&&all(0<=x&x<=1), 'Optional argument ''Cutoff'' must be a sorted, 2-element vector of values within the interval (0,1).');
 catch err
     % Trim inputChecker from the call stack in the error report
-    error(struct('identifier',err.identifier,'message',err.message,'stack',err.stack(end)));
+    throwAsCaller(err);
 end
 side = find(strcmpi(sideStr,side));
 

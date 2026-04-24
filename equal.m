@@ -16,7 +16,7 @@ try
         y = logical(collapsedim(x,@(x)iseqtol(x,tol),dim));
     end
 catch err
-    error(struct('identifier',err.identifier,'message',err.message,'stack',err.stack(end)));
+    throwAsCaller(err);
 end
 
 %%

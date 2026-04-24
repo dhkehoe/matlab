@@ -49,7 +49,7 @@ try
     plot(nan,nan,varargin{:});
 catch err
     % Rethrow the error from within this function instead of plot()
-    error(struct('identifier',err.identifier,'message',err.message,'stack',err.stack(end)));
+    throwAsCaller(err);
 end
 
 % Set defaults

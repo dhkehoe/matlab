@@ -17,6 +17,6 @@ else
     try % Catch any misformatting errors thrown by sum() and rethrow them from here
         y = y./sum(y,dim);
     catch err
-        error(struct('identifier',err.identifier,'message',err.message,'stack',err.stack(end)));
+        throwAsCaller(err);
     end
 end

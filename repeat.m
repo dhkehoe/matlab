@@ -48,7 +48,7 @@ try
         s = varargin{1};
     end
 catch err
-    throw(err);
+    throwAsCaller(err);
 end
 
 %% Process
