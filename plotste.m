@@ -1,5 +1,5 @@
 function varargout = plotste(x,y,varargin)
-% 
+%
 %
 % USAGE
 %   h = plotste(y);
@@ -8,20 +8,20 @@ function varargout = plotste(x,y,varargin)
 %   h = plotste(x,y, 'OptionalArgName',optionalArgValue, ...);
 %
 % INPUT
-%   y - 
+%   y -
 %
 % OPTIONAL INPUT
-%               x - 
-%   whiskerlength - 
-%           lines - 
-%            type - 
-%         weights - 
-%       ignoreinf - 
-%           polar - 
-%     openmarkers - 
+%               x -
+%   whiskerlength -
+%           lines -
+%            type -
+%         weights -
+%       ignoreinf -
+%           polar -
+%     openmarkers -
 %
 % OUTPUT
-%   h - 
+%   h -
 %
 %
 %   DHK - June 12, 2024
@@ -34,7 +34,7 @@ function varargout = plotste(x,y,varargin)
 
 % Check whether 'x' was omitted
 xflag = false;
-if nargin<2 
+if nargin<2
     % Only a single argument
     xflag = true;
 elseif ischar(y)
@@ -67,14 +67,14 @@ try
     lin = @(x) isnumeric(x) || ( iscell(x) && all(cellfun(@isnumeric,x)) );
     [varargin, wl  ] = inputChecker(varargin,'whiskerlength',  0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''WhiskerLength'' must be a numeric scalar.');
     [varargin, lin ] = inputChecker(varargin,'lines',         [], lin,                                           'Optional argument ''Lines'' must be a numeric vector or a cell array of numeric vectors specifying which means to connect with lines.');
-    [varargin, type] = inputChecker(varargin,'type',      'cont', @(x)ischar(x)&&any(strcmpi(x,{'cont','prop'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
+    [varargin, type] = inputChecker(varargin,'type',      'mean', @(x)ischar(x)&&any(strcmpi(x,{'mean','prop','sum'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
     [varargin, n   ] = inputChecker(varargin,'weights',       [], @(x)isnumeric(x)&&all(size(x)==size(y)),       'Optional argument ''Weights'' must be a numeric matrix with the same shape as ''y''.');
     [varargin, ign ] = inputChecker(varargin,'ignoreinf',      0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''IgnoreInf'' must be a logical scalar.');
     [varargin, pol ] = inputChecker(varargin,'polar',          0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''Polar'' must be a logical scalar.');
     [varargin, plin] = inputChecker(varargin,'polarlinestyle',[], @ischar,                                       'Optional argument ''PolarLineStyle'' must be a string specifying the line style. See the documentation for plot().');
     [varargin, plab] = inputChecker(varargin,'polarlabels',   [], @(x)isnumeric(x)&&isscalar(x)||iscell(x),      'Optional argument ''PolarLabels'' must be a numeric scalar.');
     [varargin, opmk] = inputChecker(varargin,'openmarkers',   [], @(x)isvector(x)&&numel(x)==size(y,2),          'Optional argument ''OpenMarkers'' must contain the same number of elements as there are columns in ''y''.');
-    
+
     % Be sure to wipe old plot if hold is off
     if ~ish
         clf;
@@ -90,7 +90,7 @@ catch err
 end
 
 % Convert 'type' to an integer
-type = find(strcmpi(type,{'cont','prop'})); 
+type = find(strcmpi(type,{'mean','prop','sum'}));
 
 % Set additional error checking + default behavior
 if type==2 && isempty(n) % Must provide 'n' if data is proportional
@@ -118,7 +118,7 @@ if 1<numel(lin)
     % Sort lists from longest to shortest
     [~,i] = sort(-cellfun(@numel,lin));
     lin = lin(i);
-    
+
     for i = 1:numel(lin)-1 % Step through lists
         for j = i+1:numel(lin) % N+1 step
 
@@ -126,7 +126,7 @@ if 1<numel(lin)
             for k = find( ~isnan(1:numel(lin{j})) )
                 % Check for repeats with bigger list in N step
                 if any( lin{i} == lin{j}(k) )
-                   lin{j}(k) = nan; % Drop from consideration; best case is ~ O(n)
+                    lin{j}(k) = nan; % Drop from consideration; best case is ~ O(n)
                 end
             end
         end
@@ -172,9 +172,22 @@ switch type
             end
         else
             s = nansum(n,1); %#ok
-            m = nansum( y.* n, 1 ) ./ s; %#ok            
+            m = nansum( y.* n, 1 ) ./ s; %#ok
         end
         e = sqrt( m.*(1-m) ./ s );
+    case 3 % Count data type
+        if ign
+            i = ~(isinf(y)|isnan(y));
+            m = nan(1,size(y,2));
+            e = m;
+            for j = 1:numel(m)
+                m(j) = sum(y(i(:,j),j), 1);
+                e(j) = sqrt(  sum( (y(i(:,j),j)-m(j)).^2, 1) ./ (sum(i(:,j),1)-1) .* sum(i(:,j),1)  );
+            end
+        else
+            m = nansum(y,1); %#ok
+            e = nanstd(y,[],1) .* sqrt(sum(~isnan(y),1)); %#ok
+        end
 end
 
 % Convert standard error to ( M +/- SE )
@@ -207,7 +220,7 @@ if pol  % Polar plot
     % Set scale
     xyl = [-1,1];
     xlim(xyl);
-    ylim(xyl);   
+    ylim(xyl);
 
     % Draw the quadrants
     plot(xyl,[0,0],'k--','LineStyle',plin);
@@ -218,7 +231,7 @@ if pol  % Polar plot
         x = x./numel(x)*2*pi;
     end
     m = (m-zl(1))/range(zl);
-    
+
     % Make the line connect on itself
     i = find(strcmpi('linestyle',varargin));
     if ~isempty(i) && any(contains({'-',':','--','.-'},varargin{i+1}))
@@ -247,7 +260,7 @@ if pol  % Polar plot
             plab = atan2(mean(sin(x(i+[0,1]))),mean(cos(x(i+[0,1]))));
         else
             plab = pi/4;
-        end       
+        end
     end
     for i = 1:ntix
         text(cos(plab)*i/ntix,sin(plab)*i/ntix,lab{i},...
@@ -256,8 +269,8 @@ if pol  % Polar plot
     yh = text(cos(plab)*(i+1)/ntix,sin(plab)*(i+1)/ntix,'',...
         'HorizontalAlignment','center','VerticalAlignment','middle');
     axis off;
-    
-else % Linear plot   
+
+else % Linear plot
 
     % Draw error bars
     for i = 1:size(y,2)
