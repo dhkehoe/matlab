@@ -65,15 +65,15 @@ ish = ishold;
 % Retrieve optional arguments that cannot be passed to plot()
 try
     lin = @(x) isnumeric(x) || ( iscell(x) && all(cellfun(@isnumeric,x)) );
-    [varargin, wl  ] = inputChecker(varargin,'whiskerlength',  0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''WhiskerLength'' must be a numeric scalar.');
-    [varargin, lin ] = inputChecker(varargin,'lines',         [], lin,                                           'Optional argument ''Lines'' must be a numeric vector or a cell array of numeric vectors specifying which means to connect with lines.');
-    [varargin, type] = inputChecker(varargin,'type',      'mean', @(x)ischar(x)&&any(strcmpi(x,{'mean','prop','sum'})),'Optional argument ''Type'' must be a string, with accepted values ''cont'' or ''prop''.');
-    [varargin, n   ] = inputChecker(varargin,'weights',       [], @(x)isnumeric(x)&&all(size(x)==size(y)),       'Optional argument ''Weights'' must be a numeric matrix with the same shape as ''y''.');
-    [varargin, ign ] = inputChecker(varargin,'ignoreinf',      0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''IgnoreInf'' must be a logical scalar.');
-    [varargin, pol ] = inputChecker(varargin,'polar',          0, @(x)isnumeric(x)&&isscalar(x),                 'Optional argument ''Polar'' must be a logical scalar.');
-    [varargin, plin] = inputChecker(varargin,'polarlinestyle',[], @ischar,                                       'Optional argument ''PolarLineStyle'' must be a string specifying the line style. See the documentation for plot().');
-    [varargin, plab] = inputChecker(varargin,'polarlabels',   [], @(x)isnumeric(x)&&isscalar(x)||iscell(x),      'Optional argument ''PolarLabels'' must be a numeric scalar.');
-    [varargin, opmk] = inputChecker(varargin,'openmarkers',   [], @(x)isvector(x)&&numel(x)==size(y,2),          'Optional argument ''OpenMarkers'' must contain the same number of elements as there are columns in ''y''.');
+    [varargin, wl  ] = inputChecker(varargin,'whiskerlength',  0, @(x)isnumeric(x)&&isscalar(x),                        'Optional argument ''WhiskerLength'' must be a numeric scalar.');
+    [varargin, lin ] = inputChecker(varargin,'lines',         [], lin,                                                  'Optional argument ''Lines'' must be a numeric vector or a cell array of numeric vectors specifying which means to connect with lines.');
+    [varargin, type] = inputChecker(varargin,'type',      'mean', @(x)ischar(x)&&any(strcmpi(x,{'mean','prop','sum'})), 'Optional argument ''Type'' must be one of the following strings: ''mean'', ''sum'', or ''prop''.');
+    [varargin, n   ] = inputChecker(varargin,'weights',       [], @(x)isnumeric(x)&&all(size(x)==size(y)),              'Optional argument ''Weights'' must be a numeric matrix with the same shape as ''y''.');
+    [varargin, ign ] = inputChecker(varargin,'ignoreinf',      0, @(x)isnumeric(x)&&isscalar(x),                        'Optional argument ''IgnoreInf'' must be a logical scalar.');
+    [varargin, pol ] = inputChecker(varargin,'polar',          0, @(x)isnumeric(x)&&isscalar(x),                        'Optional argument ''Polar'' must be a logical scalar.');
+    [varargin, plin] = inputChecker(varargin,'polarlinestyle',[], @ischar,                                              'Optional argument ''PolarLineStyle'' must be a string specifying the line style. See the documentation for plot().');
+    [varargin, plab] = inputChecker(varargin,'polarlabels',   [], @(x)isnumeric(x)&&isscalar(x)||iscell(x),             'Optional argument ''PolarLabels'' must be a numeric scalar.');
+    [varargin, opmk] = inputChecker(varargin,'openmarkers',   [], @(x)isvector(x)&&numel(x)==size(y,2),                 'Optional argument ''OpenMarkers'' must contain the same number of elements as there are columns in ''y''.');
 
     % Be sure to wipe old plot if hold is off
     if ~ish
