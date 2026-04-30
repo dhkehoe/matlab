@@ -31,6 +31,11 @@ switch p.samples
     case 1
         tfun = @ttest;
         if isempty(x2)
+            if size(x1,2)==2
+                x1 = diff(x1,[],2);
+            elseif size(x1,2) ~= 1
+                error('The data in a dependent (paired) t-test must be either a single or double column matrix.');
+            end
             md = nanmean(x1); %#ok
         elseif eqsize(x1,x2)
             md = nanmean(x1-x2); %#ok
