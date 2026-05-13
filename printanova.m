@@ -8,7 +8,9 @@ if isa(a,'GeneralizedLinearMixedModel')
 end
 
 % Delete intercept
-a(1,:) = [];
+if 1<size(a,1)
+    a(1,:) = [];
+end
 
 % Find number of fixed effects
 n = size(a,1);
@@ -17,7 +19,7 @@ n = size(a,1);
 str = cell(n,1);
 for i = 1:n
     s = a.Term(i);
-    str{i} = s{:};
+    str{i} = strrep(strrep(s{:},'(',''),')','');
 end
 clear s;
 
