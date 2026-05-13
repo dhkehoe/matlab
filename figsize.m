@@ -2,13 +2,15 @@ function figsize(pos,state)
 if nargin<2
     state = [];
 end
-if nargin<1 || isempty(pos)
-    pos = get(gcf,'OuterPosition');
+if nargin<1
+    pos = [];
 end
 
 units = get(gcf,'Units');
 try
-    set(gcf,'Units','normalized','OuterPosition',pos);
+    if ~isempty(pos)
+        set(gcf,'Units','normalized','OuterPosition',pos);
+    end
     if ~isempty(state)
         states = {'normal','maximized','minimized','fullscreen'};
         set(gcf,'WindowState',states{find(contains(states,state),1,'first')});
