@@ -48,8 +48,7 @@ end
 
 % Default bin edges
 if nargin < 2 || isempty(edges)
-    edges = linspace(min(data),max(data),ceil(sqrt(n)));
-    edges = [edges(1)-diff(edges(1:2))/2, edges+diff(edges(1:2))/2];
+    edges = linspace(min(data),max(data),ceil(sqrt(n))+1);
 
 else
     % Ensure this is a row vector
