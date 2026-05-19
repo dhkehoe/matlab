@@ -293,7 +293,7 @@ for i = 1:numel(p.ytick)
         end
         % Update the maximum width of y tick labels
         if h.Extent(1) < maxLabelWidth
-            maxLabelWidth = h.Extent(1);
+            maxLabelWidth = h.Extent(1)-range(xAxisLine)*.05;
         end
     end
 end
