@@ -1,4 +1,8 @@
 function setAxes(varargin)
+%
+%
+%
+
 %% manage input
 p = inputParser;
 % Axes object properties
@@ -23,7 +27,6 @@ addOptional(p,'xinterpreter',[],@(x)ischar(x)||isempty(x));
 addOptional(p,'yaxisline',[],@(x)isnumeric(x)&&numel(x)==2&&x(1)<=x(2)||isempty(x));
 addOptional(p,'yaxislocation',[],@(x)any(strcmp(x,{'left','right','origin'}))||isempty(x));
 addOptional(p,'ylabel',[],@(x)ischar(x)||isempty(x));
-addOptional(p,'ylabeloffset',[],@(x)isscalar(x)&&0<=x||isempty(x));
 addOptional(p,'ylim',[],@(x) isnumeric(x)&&numel(x)==2&&x(1)<=x(2)||isempty(x));
 addOptional(p,'yticklabel',[],@(x)iscell(x)||isempty(x));
 addOptional(p,'ytick',[],@(x)isnumeric(x)&&issorted(x)||isempty(x));
@@ -38,9 +41,6 @@ p = p.Results;
 if isempty(p.xaxislocation)
     p.xaxislocation = 'bottom';
 end
-if isempty(p.xlabeloffset)
-    p.xlabeloffset= .025;
-end
 if isempty(p.xtickrotation)
     p.xtickrotation = 0;
 end
@@ -50,9 +50,6 @@ end
 
 if isempty(p.yaxislocation)
     p.yaxislocation = 'left';
-end
-if isempty(p.ylabeloffset)
-    p.ylabeloffset = .05;
 end
 if isempty(p.ytickrotation)
     p.ytickrotation = 0;
@@ -256,11 +253,10 @@ end
 
 % Axis label
 if ~isempty(p.xlabel)
-%     keyboard
-    text(mean(xAxisLine),maxLabelHeight-range(p.ylim)*p.xlabeloffset,...
-            p.xlabel,'Rotation',0,'Interpreter',p.xinterpreter,...
-            'HorizontalAlignment','Center', 'VerticalAlignment','Top',...
-            'FontSize',p.fontsize,'LineStyle','none');
+    text(mean(xAxisLine),maxLabelHeight,p.xlabel,...
+        'Rotation',0,'Interpreter',p.xinterpreter,...
+        'HorizontalAlignment','Center', 'VerticalAlignment','Top',...
+        'FontSize',p.fontsize,'LineStyle','none');
 end
 
 %% Drawing routines for y axis
@@ -296,22 +292,16 @@ for i = 1:numel(p.ytick)
                 'HorizontalAlignment','Left','VerticalAlignment','Middle');
         end
         % Update the maximum width of y tick labels
-        set(h,'Units','normalized');
         if h.Extent(1) < maxLabelWidth
             maxLabelWidth = h.Extent(1);
-            if p.ytick(i) < 0 % If there is a leading negative sign, text() adds way too much extra padding
-                maxLabelWidth = maxLabelWidth + .01;
-            end
         end
     end
 end
 % Draw axis label
 if ~isempty(p.ylabel)
-    % TO DO, add a resize listener
-    text(maxLabelWidth-p.ylabeloffset,(mean(yAxisLine)-p.ylim(1))/range(p.ylim),...
-        p.ylabel,'Units','normalized','Rotation',90,...
-        'HorizontalAlignment','center', 'VerticalAlignment','middle',...
-        'FontSize',p.fontsize,'LineStyle','-','Interpreter',p.yinterpreter);
+    text(maxLabelWidth,mean(yAxisLine),p.ylabel,...
+        'HorizontalAlignment','center', 'VerticalAlignment','bottom',...
+        'Rotation',90,'FontSize',p.fontsize,'Interpreter',p.yinterpreter);
 end
 
 %% Finish
