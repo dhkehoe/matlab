@@ -6,26 +6,12 @@ function varargout = mplot(Z,varargin)
 
 
 %% Manage input
-sz = size(Z);
-
-% Allow this for plotting errorbars on the marginals
-if numel(sz)==3
-    sjData = Z;
-    Z = nanmean(Z,3); %#ok
-    sz = size(Z);
-else
-    sjData = [];
-end
-
-% Now ensure that we just have a square matrix
-if any(sz(1:2)==1) || numel(sz) > 2
-    error('''Z'' must be an N by M matrix where N and M are of length greater than 1.');
-end
 
 p = inputParser;
 % Marginal domains
 addOptional(p,'x', []); %
 addOptional(p,'y', []); %
+addOptional(p,'mfun', @nanmean); %#ok
 % Axis size/padding/limits
 addOptional(p,'size', [.8,.8]); % [width,height]
 addOptional(p,'lpad', .10); %
@@ -60,12 +46,53 @@ addOptional(p,'fontsize',10);
 parse(p,varargin{:});
 p = p.Results;
 
+% Check whether a reasonable marginalizing function was provided
+% ...set standard error function accordingly
+p.efun = find(contains({'mean','sum'},char(p.mfun)));
+if isempty(p.efun)
+    error('Use of ''%s'' as a marginalizing function is not supported.',char(p.mfun));
+end
+switch p.efun
+    case 1
+        p.efun = @nanste;
+    case 2
+        p.efun = @(x) nanstd(x) .* sqrt(sum(~isnan(x))); %#ok
+end
+
+%% Adjustments for data over repeated observations
+sz = size(Z);
+
+% Allow this for plotting errorbars on the marginals
+if numel(sz)==3
+    sjData = Z;
+    Z = p.mfun(Z,3);
+    sz = size(Z);
+else
+    sjData = [];
+end
+
+% Now ensure that we just have a square matrix
+if any(sz(1:2)==1) || numel(sz) > 2
+    error('''Z'' must be an N by M matrix where N and M are of length greater than 1.');
+end
+
+%%
 % Set default marginalized domains
+x = 1:size(Z,2); % pixel units
+y = 1:size(Z,1); % pixel units
 if isempty(p.x)
-    p.x = 1:size(Z,2);
+    p.x = x;  % data units
+elseif numel(size(p.x))==2
+    if all(equal(p.x,1))
+        p.x = p.x(1,:);  % support for output from kde2()
+    end
 end
 if isempty(p.y)
-    p.y = 1:size(Z,1);
+    p.y = y;
+elseif numel(size(p.y))==2
+    if all(equal(p.y,2))
+        p.y = p.y(:,1);
+    end
 end
 
 % Set default plot object properties
@@ -95,22 +122,23 @@ box off;
 drawnow;
 
 % Set or get axis limits
-if isempty(p.xlim)
-    p.xlim = xlim;
-else
-    xlim(p.xlim);
-end
-if isempty(p.ylim)
-    p.ylim = ylim;
-else
-    ylim(p.ylim);
-end
+xl = rangei(x);
+yl = rangei(y);
+setXLims(xl,p);
+setYLims(yl,p);
+p.xl = rangei(p.x(:));
+p.yl = rangei(p.y(:));
+
 % Set or get axis ticks
 if isempty(p.xtick)
-    [~,p.xtick] = axlim(rangei(p.x));%get(ax(1),'XTick');
+    [~,p.xtick] = axlim(p.xl);
+    while p.xtick(1)<p.xl(1), p.xtick(1) = []; end
+    while p.xl(2)<p.xtick(end), p.xtick(end) = []; end
 end
 if isempty(p.ytick)
-    [~,p.ytick] = axlim(rangei(p.y));%p.ytick = get(ax(1),'YTick');
+    [~,p.ytick] = axlim(p.yl);
+    while p.ytick(1)<p.yl(1), p.ytick(1) = []; end
+    while p.yl(2)<p.ytick(end), p.ytick(end) = []; end
 end
 % Set or get axis tick labels
 if isempty(p.xticklabels) && ischar(p.xticklabels)
@@ -144,11 +172,13 @@ end
 if size(p.ztick,1)==1
     p.ztick = repmat(p.ztick,2,1);
 end
+
 if p.equalaxeslim
     if isempty(sjData)
-        [zl,ztick] = axlim(rangei([nanmean(Z,1),nanmean(Z,2)'])); %#ok
+        [zl,ztick] = axlim(rangei([p.mfun(Z,1),p.mfun(Z,2)']));
     else
-        [zl,ztick] = axlim(rangei(nanmean(shiftdim(sjData,2))+[-1;1].*nanste(shiftdim(sjData,2)),[],'all')); %#ok
+        fy = [squeeze(p.mfun(sjData,1)); squeeze(p.mfun(sjData,2))]';
+        [zl,ztick] = axlim(rangei(p.mfun(fy)+[-1;1].*p.efun(fy),[],'all'));
     end
     if all(isnan(p.zlim(:)))
         p.zlim = [zl;zl];
@@ -157,7 +187,7 @@ if p.equalaxeslim
         p.ztick = [ztick;ztick];
     end
 else
-    [zl,ztick] = axlim(rangei([mean(Z,1)]));
+    [zl,ztick] = axlim(rangei([p.mfun(Z,1)]));
     if all(isnan(p.zlim(1,:)))
         p.zlim(1,:) = zl;
     end
@@ -165,7 +195,7 @@ else
         p.ztick(1,:) = ztick;
     end
 
-    [zl,ztick] = axlim(rangei([mean(Z,2)]));
+    [zl,ztick] = axlim(rangei([p.mfun(Z,2)]));
     if all(isnan(p.zlim(2,:)))
         p.zlim(2,:) = zl;
     end
@@ -177,49 +207,48 @@ end
 %% Marginal X1
 ax(2) = subplot('Position',xpos); hold on;
 if isempty(sjData)
-    plot(p.x, mean(Z,1), p.lineformat{:});
+    plot(x, p.mfun(Z,1), p.lineformat{:});
 else
-    plotste(p.x, squeeze(nanmean(sjData,1))', p.lineformat{:}); %#ok
+    fy = squeeze(p.mfun(sjData,1))';
+    shadedline(x, p.mfun(fy),p.efun(fy), p.lineformat{:});
 end
 xlabel(p.xlabel);
 ylabel(p.zlabel);
-xlim(p.xlim);
+setXLims(xl,p);
 ylim(p.zlim(1,:));
-set(ax(2),'XTick',p.xtick,'XTickLabels',p.xticklabels,'YTick',p.ztick(1,:),'FontSize',p.fontsize);
+xtix = (p.xtick-p.xl(1)) ./ range(p.xl) * range(x) + x(1);
+set(ax(2),'XTick',xtix,'XTickLabels',p.xticklabels,'YTick',p.ztick(1,:),'FontSize',p.fontsize);
 
 %% Marginal X2
 ax(3) = subplot('Position',ypos); hold on;
 if isempty(sjData)
-    plot(mean(Z,2), p.y, p.lineformat{:});
+    plot(p.mfun(Z,2), y, p.lineformat{:});
 else 
     % Marginalize over X1
-    z = squeeze(nanmean(sjData,2))'; %#ok
-
-    % Plot
-    ph = plot(nanmean(z), p.y, p.lineformat{:}); %#ok
+    fy = squeeze(p.mfun(sjData,2))';
+    
+    % Plot mean
+    ph = plot(p.mfun(fy), y, p.lineformat{:});
 
     % Compute M +/- SE
-    mse = nanmean(z) + [-1;1].*nanste(z);   %#ok
+    sem = p.mfun(fy) + [-1;1].*p.efun(fy);
 
-    % Override the line format options
-    i = find(cellfun(@ischar,p.lineformat));
-    i(contains(lower(p.lineformat(i)),{'color','mode','source','join','annotation'})) = [];
-    p.lineformat(i) = strrep(p.lineformat(i),'o','');
-    p.lineformat = [p.lineformat, 'LineStyle', '-'];
-
-    % Draw
-    for i = 1:numel(p.y), plot(mse(:,i), [0,0]+p.y(i), p.lineformat{:},'Color',ph.Color); end
+    % Draw shaded error bars
+    fill([sem(1,:),fliplr(sem(2,:))], [y,fliplr(y)], 'k', 'FaceColor',ph.Color,'FaceAlpha',.1,'LineStyle','none');
 end
 xlabel(p.zlabel);
 ylabel(p.ylabel);
 xlim(p.zlim(2,:));
-ylim(p.ylim);
-set(ax(3),'XAxisLocation','top','XTick',p.ztick(2,:),'YTick',p.ytick,'YTickLabels',p.yticklabels,'FontSize',p.fontsize);
+setYLims(yl,p);
+ytix = (p.ytick-p.yl(1)) ./ range(p.yl) * range(y) + y(1);
+set(ax(3),'XAxisLocation','top','XTick',p.ztick(2,:),'YTick',ytix,'YTickLabels',p.yticklabels,'FontSize',p.fontsize);
 
 %% Return handles
 if nargout
     varargout = {ax,fig};
 end
+% Make sure the axes are properly aligned before exiting
+drawnow; resizefunc(gcf,p);
 
 %% Automatically resize marginalized X1 subpanel
 function resizefunc(fig,p)
@@ -227,4 +256,17 @@ c = get(fig,'Children');
 if ~isempty(c) && p.addcolorbar
     xpos = [c(4).Position(1), p.dpad, c(4).Position(3), 1-p.size(2)-p.apad];
     set(c(2),'Position',xpos);
+end
+
+function setXLims(xl,p)
+if isempty(p.xlim)
+    xlim(xl)
+elseif ~isempty(p.x) % 'xlim' should be in units
+    xlim( (p.xlim-min(p.x))./range(p.x) * range(xl)+xl(1) );
+end
+function setYLims(yl,p)
+if isempty(p.ylim)
+    ylim(yl)
+elseif ~isempty(p.y) % 'ylim' should be in units
+    ylim( (p.ylim-min(p.y))./range(p.y) * range(yl)+yl(1) );
 end
