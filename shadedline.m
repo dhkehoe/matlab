@@ -3,6 +3,7 @@ function varargout = shadedline(x,y,e,varargin)
 % Force these to row vectors
 x = x(:)';
 y = y(:)';
+e = squeeze(e);
 
 % Set hold behavior
 ish = ishold;
