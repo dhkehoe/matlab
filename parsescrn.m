@@ -56,11 +56,11 @@ function [targOrig, targRect, scale] = parsescrn(n,varargin)
 %% Valiate input
 p = inputParser;
 addParameter(p,'rect', [0,0,1920,1080], @isnumeric);
-addParameter(p,'ncol', [],              @(x)numel(x)==1&isnumeric(x));
-addParameter(p,'nrow', [],              @(x)numel(x)==1&isnumeric(x));
-addParameter(p,'type', 1,               @(x)numel(x)==1&isnumeric(x));
-addParameter(p,'plot', false,           @(x)numel(x)==1&islogical(logical(x)));
-addParameter(p,'scrn', [0,0,1920,1080], @isnumeric);
+addParameter(p,'ncol', [],              @(x)isscalar(x)&isnumeric(x)&isint(x));
+addParameter(p,'nrow', [],              @(x)isscalar(x)&isnumeric(x)&isint(x));
+addParameter(p,'type', 1,               @(x)isscalar(x)&isnumeric(x)&isint(x));
+addParameter(p,'plot', false,           @(x)isscalar(x)&islogical(logical(x)));
+addParameter(p,'scrn', [],              @isnumeric);
 parse(p,varargin{:});
 p = p.Results;
 
@@ -157,14 +157,14 @@ if p.plot
 
     % Set default rect container
     scrn = p.scrn(:)';
-    switch numel(p.rect)
+    switch numel(p.scrn)
         case 4
         case 2
             scrn = [0, 0, p.scrn];
         case 1
             scrn = [0, 0, p.scrn, p.scrn];
         case 0
-            scrn = [0, 0, 1920, 1080];
+            scrn = rect;%[0, 0, 1920, 1080];
         otherwise
             error('Bad format for optional argument ''scrn''.')
     end
