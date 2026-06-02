@@ -150,7 +150,7 @@ addRequired(p,'sigma', @(x)(isscalar(x)||numel(x)==2)&&isnumeric(x)); % sigma (*
 addParameter(p,'center',[0 0],@(x)numel(x)==2&&isnumeric(x)); % mu (*pixels)
 addParameter(p,'ori',pi/2,@(x)isscalar(x)&&isnumeric(x)); % theta (radians)
 addParameter(p,'phase',0, @(x)isscalar(x)&&isnumeric(x)); % psi (radians)
-addParameter(p,'contrast',.5,@(x)(isscalar(x)||numel(x)==3||size(x,1)==2&&size(x,2)==3)&&isnumeric(x)&&all(0<=x(:))&&((isa(x,'double')&&all(x(:)<=1))||(isa(x,'uint8')&&all(x(:)<=1)))); % contrast (normalized 0-1)
+addParameter(p,'contrast',.5,@(x)(isscalar(x)||numel(x)==3||size(x,1)==2&&size(x,2)==3)&&isnumeric(x)&&all(0<=x(:))&&((isa(x,'double')&&all(x(:)<=1))||(isa(x,'uint8')&&all(x(:)<=255)))); % contrast (normalized 0-1)
 addParameter(p,'backgrd',.5,@(x)(isscalar(x)||numel(x)==3)&&isnumeric(x)&&all(0<=x&x<=1)); % luminance (normalized 0-1)
 addParameter(p,'conversion',1,@(x)isscalar(x)&&isnumeric(x)&&0<=x); % specify pixels per some arbitrary unit (e.g., pixels/degree)
 addParameter(p,'format','double',@ischar); % specify the color encoding format double (0-1) or uint8 (0-255)
@@ -191,7 +191,7 @@ if ~any(strcmp(p.format,{'double','uint8'}))
 end
 
 % Repeat sigma if needed
-if numel(p.sigma)==1
+if isscalar(p.sigma)
     p.sigma = repmat(p.sigma,1,2);
 end
 
