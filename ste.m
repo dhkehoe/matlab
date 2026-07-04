@@ -16,11 +16,11 @@ else
 end
 
 % Compute 'n', possibly adjusting for 'omitnan' flag
-if contains( lower(varargin(cellfun(@ischar,varargin))), 'omitnan' )
-    n = sum( ~isnan(varargin{1}), dim);
-else
-    n = size(varargin{1},dim);
-end
+n = sum( ~isnan(varargin{1}), dim);
 
 % Compute and let var() catch any argument errors
-e = sqrt( var(varargin{:}) ./ n);
+try
+    e = sqrt( var(varargin{:}) ./ n);
+catch err
+    throwAsCaller(err);
+end
