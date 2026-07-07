@@ -136,7 +136,15 @@ else
 end
 
 % Trim error trials
-trials = trials([trials(:).error]==0);
+trials = trials(~[trials(:).error]);
+
+% Trim trials where the tracker failed to return an alignment time
+%   Encountered the first ever instance of this on July 3rd, 2026  -dhk
+i =  ~[trials(:).trackerTime];
+if any(i)
+    warning('Detected %d trial(s) with invalid value for ''trackerTime''.',sum(i));
+    trials(i) = [];
+end
 
 % Parse optional inputs
 p = inputParser;

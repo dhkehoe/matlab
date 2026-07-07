@@ -1,4 +1,4 @@
-function varargout = concatenateMAT(d,overwrite)
+function varargout = concatenateMAT(d,overwrite,fexclude,dexclude)
 % Concatenate data files for an experimental session within the RIGBOX
 % ecosystem. 'd' is a file path for the parent folder of the experimental
 % session. Within the RIGBOX ecosystem, 'd' contains 1 or more
@@ -24,6 +24,29 @@ function varargout = concatenateMAT(d,overwrite)
 if ~isfolder(d)
     error('''%s'' is not a valid file path.',d);
 end
+
+% Directory string exclusions:
+if nargin<4 || isempty(dexclude)
+    dexclude = {};
+end
+% Force exclusion of the unix parent references
+if ~iscell(dexclude)
+    dexclude = {dexclude};
+end
+dexclude = [dexclude, '.'];
+
+% File string exclusions
+if nargin<3 || isempty(fexclude)
+    fexclude = {};
+end
+% Force exclusion of 'task' files
+if ~iscell(fexclude)
+    fexclude = {fexclude};
+end
+fexclude = [fexclude, 'task'];
+
+
+% Overwrite?
 if nargin<2 || isempty(overwrite)
     overwrite = 1;
 end
@@ -58,7 +81,12 @@ end
 
 f = dir(d); % Folder contents
 f = {f([f(:).isdir]).name}; % Just the subdirectories
-f(contains(f,'.')) = []; % Exclude the unix parent references
+f(contains(f,dexclude)) = []; % Exclusions
+
+% Check that there's no irregularities in naming conventions
+if any(diff(cellfun(@numel,f)))
+    warning('Inconsistent naming convention for session folders. Try updating directory exclusion list? See optional argument ''dexclude''.');
+end
 
 % Step through the subdirectories
 for i = 1:numel(f)
@@ -68,7 +96,7 @@ for i = 1:numel(f)
 
     % Get the contents
     ff = {dir(f{i}).name};
-    ff(~contains(ff,'.mat')|contains(ff,'task')) = []; % Just the .mat trial files
+    ff(~contains(ff,'.mat')|contains(ff,fexclude)) = []; % Just the .mat trial files
 
     % Update subdirectory list to include exhaustive list of full file
     % paths to each .mat file
@@ -94,7 +122,7 @@ end
 
 % Save the concatenated struct array
 if overwrite
-    save([d,filesep,s,'.mat'],x);
+    save([d,filesep,s,'.mat'],'x');
 end
 
 % Return the struct array
