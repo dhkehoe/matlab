@@ -107,6 +107,12 @@ end
 clear ff;
 f = vertcat(f{:});
 
+% Is it empty?
+if isempty(f)
+    varargout = cell(1,nargout);
+    return;
+end
+
 % Get the variable name
 v = whos('-file',f(1,:)).name;
 
