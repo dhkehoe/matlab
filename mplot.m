@@ -141,12 +141,12 @@ p.yl = rangei(p.y(:));
 
 % Set or get axis ticks
 if isempty(p.xtick)
-    [~,p.xtick] = Axlim(p.x,pdfflag);
+    [~,p.xtick] = Axlim(p.x);
     % while p.xtick(1)<p.xl(1), p.xtick(1) = []; end
     % while p.xl(2)<p.xtick(end), p.xtick(end) = []; end
 end
 if isempty(p.ytick)
-    [~,p.ytick] = Axlim(p.y,pdfflag);
+    [~,p.ytick] = Axlim(p.y);
     % while p.ytick(1)<p.yl(1), p.ytick(1) = []; end
     % while p.yl(2)<p.ytick(end), p.ytick(end) = []; end
 end
@@ -326,6 +326,10 @@ end
 
 %% Adjust the axlim function
 function [lim,tix] = Axlim(data,pdfflag)
+if nargin<2 || isempty(pdfflag)
+    pdfflag = false;
+end
+
 r = rangei(data(:));
 [lim,tix] = axlim(r);
 if pdfflag
