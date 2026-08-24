@@ -4,3 +4,4 @@ function y = cgeopdf(x,p)
 %
 %   See documentation for geopdf()
 y = p.*(1-p).^x;
+y( x<0 ) = 0;

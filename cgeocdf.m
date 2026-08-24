@@ -3,4 +3,5 @@ function y = cgeocdf(x,p)
 % reals.
 %
 %   See documentation for geocdf()
-y = 1-(1-p).^x;
+y = 1-(1-p).^(x+1);
+y( x<0 ) = 0;
