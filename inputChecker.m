@@ -22,12 +22,14 @@ if nargin<3
     dval = [];
 end
 
+%% Allow efun() to accept empty
+
 %% Routine
 val = dval;
 for i = 1:numel(varg)
     if i<numel(varg) && ischar(varg{i}) && strcmpi(varg{i},vstr)
         val = varg{i+1};
-        if ~efun(val)
+        if ~isempty(val) && ~efun(val) %% Allow empty
             error(estr);
         end
         varg(i:i+1) = [];
