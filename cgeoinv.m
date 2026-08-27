@@ -4,3 +4,4 @@ function y = cgeoinv(x,p)
 %
 %   See documentation for geoinv()
 y = log(1-x)./log(1-p);
+y( x<0 | 1<x | p<=0 | 1<p ) = nan;
