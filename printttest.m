@@ -8,6 +8,7 @@ if ischar(x2)
 end
 
 p = inputParser;
+addOptional(p,'correction', 1,@(x)isscalar(x)&&0<x);
 addOptional(p,'print',     [],@isscalar);
 addOptional(p,'samples',   [],@isscalar);
 addOptional(p,'args', {'tail','both'},@iscell);
@@ -54,6 +55,7 @@ end
 
 %%
 [~,tp,ci,stats] = tfun(x1,x2,p.args{:});
+tp = tp * p.correction;
 str = sprintf('t(%d) = %.2f, 95%%CI = [%.2f, %.2f], p %s, d = %.2f, MD = %.2f',...
     stats.df,stats.tstat,ci,pval(tp),abs(md)/stats.sd,md);
 
