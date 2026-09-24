@@ -92,6 +92,7 @@ try
 
     % Plot shading
     if isvector(e)
+        e( isnan(e) | isinf(e) ) = 0;
         fill([x,fliplr(x)],[y-e(:)',fliplr(y+e(:)')],varargin0{:});
     else
         fill([x,fliplr(x)],[e(1,:),fliplr(e(2,:))],varargin0{:});
