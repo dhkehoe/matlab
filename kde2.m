@@ -56,6 +56,7 @@ function [y,x1,x2] = kde2(d,varargin)
 %           the KDE integrates to across the 2D domain. A value of 1 is
 %           therefore a bivariate proability density function. Default is 1
 %
+%  bounds - 
 %
 % OUTPUT
 %  y - The height of the fitted KDE across the 2D domain.
@@ -99,10 +100,17 @@ addOptional(p,'npoints',[]), % Number of evenly spaced points along domain
 addOptional(p,'scale',[]),   % Spatial scale
 addOptional(p,'norm',[]),    % Normalization factor
 addOptional(p,'kernel',[]),  % Smoothing kernel
+addOptional(p,'bounds',[]),  % Smoothing kernel
 parse(p,varargin{:});
 p = p.Results;
 % Now set any defaults and check the integrity of values that have been
 % passed:
+
+%% Set default bounds
+if isempty(p.bounds)
+    p.bounds = [];
+else
+end
 
 %% Set default kernel
 if isempty(p.kernel)
@@ -122,11 +130,11 @@ end
 
 % Define the kernels
 switch p.kernel
-    case 1
+    case 1 % Gaussian
         k = @(x1,x2,bw) mean(exp( -x1.^2/(2*bw(1)^2) -x2.^2/(2*bw(2)^2) ),3) / prod([2,pi,bw]);
-    case 2
+    case 2 % Rectangular
         k = @(x1,x2,bw) mean(-bw(1)/2 <= x1 & x1 <= bw(1)/2 & -bw(2)/2 <= x2 & x2 <= bw(2)/2,3) / prod(bw);
-    case 3
+    case 3 % von Mises
         k = @(x1,x2,bw) mean(exp( bw(1)*cos(x1)+bw(2)*cos(x2) ),3) / ((2*pi)^2*prod(besseli(0,bw)));% prod( bw./(4*pi*sinh(bw)) );
 end
 
@@ -155,6 +163,13 @@ elseif numel(p.norm)~=1
     error('Optional argument ''norm'' must be scalar.'),
 end
 
+%% Ensure bounds format
+if numel(p.bounds)==2
+    p.bounds = [p.bounds(:)'; p.bounds(:)']; % Repeat; ensure format
+elseif ~isempty(p.bounds) && ~all(size(p.bounds) == [2,2]) % Wrong number of xlims provided
+    error('Optional argument ''bounds'' must contain either a 1x2 vector or 2x2 matrix.');
+end
+
 %% Set default domain
 if isempty(p.domain)
     % If a full domain isn't provided, defaults must be computed using 'xl'
@@ -170,6 +185,13 @@ if isempty(p.domain)
     elseif ~all(size(p.xl) == [2,2]) % Wrong number of xlims provided
         error('Optional argument ''xl'' must contain either a 1x2 vector or 2x2 matrix.');
     end
+
+    % Adjust the limits for bounded variables (over-ridden if domain is
+    % provided)
+    if ~isempty(p.bounds)
+        p.xl = [max(p.xl(:,1), p.bounds(:,1)), min(p.xl(:,2), p.bounds(:,2))];
+    end
+
     % Now check that 'xl' is sorted
     if ~all(p.xl(:,1)<=p.xl(:,2))
         error('Optional argument ''xl'' must be in column-wise ascending order.');
@@ -216,7 +238,7 @@ else % Domain has been provided
 
     % Domain supercedes 'xl', 'scale', and 'npoints'
     if ~isempty(p.xl) || ~isempty(p.scale) || ~isempty(p.npoints)
-        warning('Optional argument ''domain'' was provided, so any optional arguments ''xl'', ''scale'', and ''xl'' will be ignored.');
+        warning('Optional argument ''domain'' was provided, so any optional arguments ''xl'', ''scale'', and ''npoints'' will be ignored.');
     end
 
     % Ensure domain integrity
@@ -239,12 +261,30 @@ end
 % Compute full 2D domain
 [x1,x2] = meshgrid(p.domain{1}, p.domain{2});
 
+% Repeat the data across the domain
+mu1 = shiftdim(repmat(d(:,1),1,size(x1,1),size(x1,2)),1);
+mu2 = shiftdim(repmat(d(:,2),1,size(x2,1),size(x2,2)),1);
+
 % Compute deviations of data along both dimensions
-d1 = repmat(x1,1,1,n(1)) - shiftdim(repmat(d(:,1),1,size(x1,1),size(x1,2)),1) ;
-d2 = repmat(x2,1,1,n(1)) - shiftdim(repmat(d(:,2),1,size(x2,1),size(x2,2)),1) ;
+d1 = x1 - mu1;
+d2 = x2 - mu2;
 
 % Compute KDE
-y = k(d1,d2,p.bw)*p.norm;
+y = k(d1,d2, p.bw)*p.norm;
+
+% Exit if no boundary adjustments are necessary
+if isempty(p.bounds) || 1<p.kernel
+    return;
+end
+
+% Adjust locations on the domain that are out-of-bounds
+y( x1<p.bounds(1,1) | p.bounds(1,2)<x1  |  x2<p.bounds(2,1) | p.bounds(2,2)<x2 ) = 0;
+
+% Rescale the kernels that cross boundaries
+y = y ./ ...
+    (  normcdf(p.bounds(1,2),x1,p.bw(1))-normcdf(p.bounds(1,1),x1,p.bw(1))  ) ./ ...
+    (  normcdf(p.bounds(2,2),x2,p.bw(2))-normcdf(p.bounds(2,1),x2,p.bw(2))  );
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% UTILITIES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function y = iqr(x)
