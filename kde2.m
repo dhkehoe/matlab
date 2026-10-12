@@ -164,10 +164,22 @@ elseif numel(p.norm)~=1
 end
 
 %% Ensure bounds format
-if numel(p.bounds)==2
+
+% Allow shortcuts:
+if isscalar(p.bounds) % Scalar = lower bound, both dimensions (e.g., zero)
+    p.bounds = [p.bounds, inf; p.bounds, inf]; % Repeat; ensure format
+elseif numel(p.bounds)==2 % Length 2 vector = [lower,upper] bounds, both dimensions
     p.bounds = [p.bounds(:)'; p.bounds(:)']; % Repeat; ensure format
-elseif ~isempty(p.bounds) && ~all(size(p.bounds) == [2,2]) % Wrong number of xlims provided
-    error('Optional argument ''bounds'' must contain either a 1x2 vector or 2x2 matrix.');
+end
+
+if ~isempty(p.bounds)
+    % Check format
+    if ~( numel(size(p.bounds))==2 && all(size(p.bounds)==2) ) % Wrong number of xlims provided
+        error('Optional argument ''bounds'' must contain either a scalar, 1x2 vector, or 2x2 matrix.');
+    end
+    
+    % Remove observations outside of the bounds 
+    d( any(d < p.bounds(:,1)' | p.bounds(:,2)' < d, 2), :) = [];
 end
 
 %% Set default domain
@@ -261,31 +273,35 @@ end
 % Compute full 2D domain
 [x1,x2] = meshgrid(p.domain{1}, p.domain{2});
 
-% Repeat the data across the domain
-mu1 = shiftdim(repmat(d(:,1),1,size(x1,1),size(x1,2)),1);
-mu2 = shiftdim(repmat(d(:,2),1,size(x2,1),size(x2,2)),1);
-
 % Compute deviations of data along both dimensions
-d1 = x1 - mu1;
-d2 = x2 - mu2;
+d1 = x1 - shiftdim(repmat(d(:,1),1,size(x1,1),size(x1,2)),1);
+d2 = x2 - shiftdim(repmat(d(:,2),1,size(x2,1),size(x2,2)),1);
 
 % Compute KDE
 y = k(d1,d2, p.bw)*p.norm;
 
-% Exit if no boundary adjustments are necessary
+% Quick exit if no boundary adjustments are necessary
 if isempty(p.bounds) || 1<p.kernel
     return;
 end
 
-% Adjust locations on the domain that are out-of-bounds
+%% Adjust density for boundaries
+
+% Isolate the intersections of the boundaries
+b = [...
+    p.bounds(1,2), p.bounds(2,2);... +( upper bound x, upper bound y )
+    p.bounds(1,1), p.bounds(2,2);... -( lower bound x, upper bound y )
+    p.bounds(1,2), p.bounds(2,1);... -( upper bound x, lower bound y )
+    p.bounds(1,1), p.bounds(2,1);... +( lower bound x, lower bound y )
+    ]; 
+
+% Rescale the kernels by the cumulative density within the boundaries for each kernel:
+y = y ./ reshape(...
+    +mvncdf(([x1(:),x2(:)]-b(1,:))./p.bw)... ( upper bound x, upper bound y )
+    -mvncdf(([x1(:),x2(:)]-b(2,:))./p.bw)... ( lower bound x, upper bound y )
+    -mvncdf(([x1(:),x2(:)]-b(3,:))./p.bw)... ( upper bound x, lower bound y )
+    +mvncdf(([x1(:),x2(:)]-b(4,:))./p.bw),...( lower bound x, lower bound y )
+    size(x1));
+
+% Truncate locations on the domain that are out-of-bounds
 y( x1<p.bounds(1,1) | p.bounds(1,2)<x1  |  x2<p.bounds(2,1) | p.bounds(2,2)<x2 ) = 0;
-
-% Rescale the kernels that cross boundaries
-y = y ./ ...
-    (  normcdf(p.bounds(1,2),x1,p.bw(1))-normcdf(p.bounds(1,1),x1,p.bw(1))  ) ./ ...
-    (  normcdf(p.bounds(2,2),x2,p.bw(2))-normcdf(p.bounds(2,1),x2,p.bw(2))  );
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% UTILITIES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function y = iqr(x)
-y = diff(prctile(x, [25, 75]));
